@@ -33,5 +33,15 @@
   ],
   "listen_enabled": false,
   "listen_address": "",
-  "listen_port": 8188
+  "listen_port": 8188,
+
+  "_section_snapshot": "--- Custom Node Snapshot ---",
+  "_comment_snapshot": [
+    "snapshot_path: optional path to a snapshot file to use during updates.",
+    "If set, skips the interactive save-before-update prompt and uses this file.",
+    "Leave empty to be prompted each time (recommended: saves current nodes first).",
+    "Use forward slashes or double backslashes in the path.",
+    "Example: 'C:/Backups/my-comfyui-snapshot.json'"
+  ],
+  "snapshot_path": ""
 }

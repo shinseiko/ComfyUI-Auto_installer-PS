@@ -131,8 +131,31 @@ if "%InstallType%"=="venv" (
     )
 )
 
+:: -----------------------------------------------------------------------
+:: OPTIONAL: Pass --snapshot <path> to use a specific snapshot for this run.
+::   UmeAiRT-Update-ComfyUI.bat --snapshot "C:\Backups\my-nodes-snapshot.json"
+:: For a persistent default, set snapshot_path in umeairt-user-config.json.
+:: -----------------------------------------------------------------------
+set "SNAPSHOT_PATH="
+
+:parse_args
+if "%~1"=="" goto :done_args
+if /i "%~1"=="--snapshot" (
+    set "SNAPSHOT_PATH=%~2"
+    shift
+    shift
+    goto :parse_args
+)
+shift
+goto :parse_args
+:done_args
+
 echo [INFO] Launching PowerShell update script...
-%PS_EXE% -ExecutionPolicy Bypass -File "%ScriptsFolder%\Update-ComfyUI.ps1" -InstallPath "%InstallPath%"
+if defined SNAPSHOT_PATH (
+    %PS_EXE% -ExecutionPolicy Bypass -File "%ScriptsFolder%\Update-ComfyUI.ps1" -InstallPath "%InstallPath%" -SnapshotPath "%SNAPSHOT_PATH%"
+) else (
+    %PS_EXE% -ExecutionPolicy Bypass -File "%ScriptsFolder%\Update-ComfyUI.ps1" -InstallPath "%InstallPath%"
+)
 echo.
 echo [INFO] The update script is complete.
 pause

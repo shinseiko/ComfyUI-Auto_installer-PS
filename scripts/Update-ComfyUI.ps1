@@ -5,11 +5,19 @@
     This script updates:
     - ComfyUI core (via Git).
     - Custom Nodes (via ComfyUI-Manager CLI and 'update all').
-    - Python dependencies (pip requirements).
+    - Python dependencies (uv/pip requirements).
     - Optimized components (Triton/SageAttention via DazzleML).
 .PARAMETER InstallPath
     The root directory for the installation.
+.PARAMETER SnapshotPath
+    Optional path to a specific snapshot file to use for node restore.
+    If omitted the script prompts interactively (recommended: save current nodes first).
 #>
+
+param(
+    [string]$InstallPath = (Split-Path -Path $PSScriptRoot -Parent),
+    [string]$SnapshotPath = ""
+)
 
 #===========================================================================
 # SECTION 1: SCRIPT CONFIGURATION & HELPER FUNCTIONS
@@ -21,7 +29,6 @@
 $env:PYTHONUTF8 = "1"
 
 # --- Paths and Configuration ---
-$InstallPath = (Split-Path -Path $PSScriptRoot -Parent)
 $comfyPath = Join-Path $InstallPath "ComfyUI"
 # Target internal folder (Junctions handle the redirection to external storage)
 $internalCustomNodesPath = Join-Path $comfyPath "custom_nodes"
@@ -90,7 +97,7 @@ Write-Log "Updating ComfyUI Core..." -Level 1
 Invoke-AndLog "git" "-C `"$comfyPath`" pull"
 Write-Log "Checking main ComfyUI requirements..." -Level 1
 $mainReqs = Join-Path $comfyPath "requirements.txt"
-Invoke-AndLog $pythonExe "-m pip install -r `"$mainReqs`""
+Invoke-AndLog "uv" "pip install --python `"$pythonExe`" -r `"$mainReqs`""
 
 # --- 2. Update and Install Custom Nodes (Manager CLI) ---
 Write-Log "Updating/Installing Custom Nodes..." -Level 0 -Color Green
@@ -109,27 +116,111 @@ if (Test-Path $managerPath) {
 $managerReqs = Join-Path $managerPath "requirements.txt"
 if (Test-Path $managerReqs) {
     Write-Log "Updating ComfyUI-Manager dependencies..." -Level 1
-    Invoke-AndLog $pythonExe "-m pip install -r `"$managerReqs`""
+    Invoke-AndLog "uv" "pip install --python `"$pythonExe`" -r `"$managerReqs`""
 }
+
+# --- C. Enable uv in ComfyUI Manager config ---
+Set-ManagerUseUv -InstallPath $InstallPath
 
 $cmCliScript = Join-Path $managerPath "cm-cli.py"
 
-# --- C. Setup Environment Variables for CLI ---
+# --- D. Setup Environment Variables for CLI ---
 # This matches the logic in Phase 2 to prevent "ModuleNotFoundError"
 $env:PYTHONPATH = "$comfyPath;$managerPath;$env:PYTHONPATH"
 $env:COMFYUI_PATH = $comfyPath
 
-# --- D. Global Update Strategy ---
-$snapshotFile = Join-Path $scriptPath "snapshot.json"
+# --- E. Snapshot Resolution ---
+$userSnapshotFile      = Join-Path $scriptPath "user-snapshot.json"
+$upstreamSnapshotFile  = Join-Path $scriptPath "snapshot.json"
+$effectiveSnapshotFile = $null
+$snapshotSource        = ""
 
-# 1. Restore Snapshot (if available) to ensure all nodes are present
-if (Test-Path $snapshotFile) {
+# Priority 1: -SnapshotPath param
+if ($SnapshotPath -and $SnapshotPath.Trim() -ne "") {
+    if (-not (Test-Path $SnapshotPath)) {
+        Write-Log "WARNING: -SnapshotPath '$SnapshotPath' not found, falling through." -Color Yellow
+    } else {
+        $effectiveSnapshotFile = $SnapshotPath.Trim()
+        $snapshotSource = "parameter (-SnapshotPath)"
+    }
+}
+
+# Priority 2: snapshot_path in umeairt-user-config.json
+if ($null -eq $effectiveSnapshotFile) {
+    $userConfigPath = Join-Path $InstallPath "umeairt-user-config.json"
+    if (Test-Path $userConfigPath) {
+        try {
+            $uc = Get-Content $userConfigPath -Raw | ConvertFrom-Json
+            if ($uc.PSObject.Properties["snapshot_path"] -and $uc.snapshot_path) {
+                $cfgPath = [string]$uc.snapshot_path
+                if (-not (Test-Path $cfgPath)) {
+                    Write-Log "WARNING: snapshot_path '$cfgPath' not found, falling through." -Color Yellow
+                } else {
+                    $effectiveSnapshotFile = $cfgPath
+                    $snapshotSource = "umeairt-user-config.json"
+                }
+            }
+        } catch {
+            Write-Log "WARNING: Could not read snapshot_path from config: $($_.Exception.Message)" -Color Yellow
+        }
+    }
+}
+
+# Priority 3+4: interactive prompt
+if ($null -eq $effectiveSnapshotFile) {
+    Write-Host ""
+    Write-Host "  *** CUSTOM NODE PROTECTION ***"
+    Write-Host ""
+    Write-Host "  If you have installed custom nodes beyond what UmeAiRT ships by default,"
+    Write-Host "  answer YES to save a snapshot of your current setup before updating."
+    Write-Host "  Your snapshot will be used to restore any nodes that go missing after the update."
+    Write-Host ""
+    Write-Host "  Answer NO only if your current install is broken and you want to start fresh,"
+    Write-Host "  or if you intentionally want to reset to UmeAiRT's default node set."
+    Write-Host ""
+    $answer = (Read-Host "  Protect your custom nodes? [Y/n]").Trim()
+    if ($answer -eq "" -or $answer -match "^[Yy]") {
+        try {
+            Invoke-AndLog $pythonExe "`"$cmCliScript`" save-snapshot --output `"$userSnapshotFile`""
+            if (Test-Path $userSnapshotFile) {
+                $effectiveSnapshotFile = $userSnapshotFile
+                $snapshotSource = "auto-saved (this run)"
+            } else {
+                Write-Log "WARNING: save-snapshot ran but file not found, falling through." -Color Yellow
+            }
+        } catch {
+            Write-Log "WARNING: save-snapshot failed: $($_.Exception.Message)" -Color Yellow
+        }
+    }
+    # Priority 4: pre-existing user-snapshot.json
+    if ($null -eq $effectiveSnapshotFile -and (Test-Path $userSnapshotFile)) {
+        $effectiveSnapshotFile = $userSnapshotFile
+        $snapshotSource = "existing user-snapshot.json"
+    }
+    # Priority 5: upstream fallback
+    if ($null -eq $effectiveSnapshotFile -and (Test-Path $upstreamSnapshotFile)) {
+        $effectiveSnapshotFile = $upstreamSnapshotFile
+        $snapshotSource = "upstream snapshot.json (fallback)"
+        Write-Log "NOTE: Using upstream snapshot — consider saving your own via ComfyUI Manager." -Color Yellow
+    }
+}
+
+if ($effectiveSnapshotFile) {
+    Write-Log "Snapshot: $snapshotSource" -Color Cyan
+}
+
+# --- F. Global Update Strategy ---
+
+# 1. Restore Snapshot to ensure all nodes are present
+if ($null -ne $effectiveSnapshotFile -and (Test-Path $effectiveSnapshotFile)) {
     Write-Log "Install missing nodes first..." -Level 1 -Color Cyan
     try {
-        Invoke-AndLog $pythonExe "`"$cmCliScript`" restore-snapshot `"$snapshotFile`""
+        Invoke-AndLog $pythonExe "`"$cmCliScript`" restore-snapshot `"$effectiveSnapshotFile`""
     } catch {
         Write-Log "WARNING: Snapshot restore encountered issues." -Level 1 -Color Yellow
     }
+} else {
+    Write-Log "WARNING: No snapshot available, skipping restore-snapshot." -Color Yellow
 }
 
 # 2. Update All Nodes (New & Existing)
@@ -149,7 +240,8 @@ $installerDest = Join-Path $InstallPath $installerInfo.destination
 
 try {
     # Always download fresh to get latest logic
-    Save-File -Uri $installerInfo.url -OutFile $installerDest
+    $installerSha256 = if ($installerInfo.PSObject.Properties["sha256"]) { [string]$installerInfo.sha256 } else { "" }
+    Save-File -Uri $installerInfo.url -OutFile $installerDest -ExpectedHash $installerSha256
 
     if (Test-Path $installerDest) {
         Write-Log "Executing DazzleML Installer (Upgrade Mode)..." -Level 1

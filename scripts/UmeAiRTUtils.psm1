@@ -129,6 +129,83 @@ function Invoke-AndLog {
     }
 }
 
+function Confirm-FileHash {
+    <#
+    .SYNOPSIS
+        Verifies a file's cryptographic hash. Deletes the file and throws on mismatch.
+    .PARAMETER Path
+        Path to the file to verify.
+    .PARAMETER Expected
+        Expected hash value (hex string, case-insensitive).
+    .PARAMETER Algorithm
+        Hash algorithm. Default: SHA256.
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$Expected,
+        [string]$Algorithm = 'SHA256'
+    )
+    $actual = (Get-FileHash -Path $Path -Algorithm $Algorithm).Hash
+    if ($actual -ne $Expected.ToUpper()) {
+        Remove-Item $Path -Force -ErrorAction SilentlyContinue
+        throw "SECURITY: Hash mismatch for '$(Split-Path $Path -Leaf)'`n  Expected: $Expected`n  Actual:   $actual`n  File deleted. Aborting."
+    }
+    Write-Log "  [verified] $(Split-Path $Path -Leaf)" -Color Green
+}
+
+function Confirm-Authenticode {
+    <#
+    .SYNOPSIS
+        Verifies the Authenticode signature on a Windows binary. Deletes and throws on failure.
+    .PARAMETER Path
+        Path to the signed file (.exe, .msi, etc.).
+    .PARAMETER ExpectedSubject
+        Substring expected in the signing certificate's Subject field (e.g. "Microsoft Corporation").
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$ExpectedSubject
+    )
+    $sig = Get-AuthenticodeSignature -FilePath $Path
+    if ($sig.Status -ne 'Valid') {
+        Remove-Item $Path -Force -ErrorAction SilentlyContinue
+        throw "SECURITY: Invalid Authenticode signature on '$(Split-Path $Path -Leaf)': $($sig.Status). File deleted."
+    }
+    if ($sig.SignerCertificate.Subject -notmatch [regex]::Escape($ExpectedSubject)) {
+        Remove-Item $Path -Force -ErrorAction SilentlyContinue
+        throw "SECURITY: Unexpected signer on '$(Split-Path $Path -Leaf)'`n  Expected subject: $ExpectedSubject`n  Got: $($sig.SignerCertificate.Subject)`n  File deleted."
+    }
+    Write-Log "  [authenticated] $(Split-Path $Path -Leaf) — $($sig.SignerCertificate.Subject)" -Color Green
+}
+
+function Set-ManagerUseUv {
+    <#
+    .SYNOPSIS
+        Ensures ComfyUI Manager's config.ini has use_uv = True.
+    .PARAMETER InstallPath
+        Root install directory (parent of the user/ folder).
+    #>
+    param([string]$InstallPath)
+    $configPath = Join-Path $InstallPath "user/__manager/config.ini"
+    $configDir  = Split-Path $configPath -Parent
+    if (-not (Test-Path $configDir)) { New-Item -ItemType Directory -Path $configDir -Force | Out-Null }
+    if (Test-Path $configPath) {
+        $content = Get-Content $configPath -Raw
+        if ($content -match 'use_uv\s*=') {
+            $content = $content -replace 'use_uv\s*=\s*\S+', 'use_uv = True'
+        } else {
+            $content = $content.TrimEnd() + "`nuse_uv = True`n"
+        }
+        Set-Content $configPath $content -Encoding UTF8
+    } else {
+        @"
+[default]
+use_uv = True
+"@ | Set-Content $configPath -Encoding UTF8
+    }
+    Write-Log "ComfyUI Manager: use_uv = True" -Color Green
+}
+
 function Save-File {
     <#
     .SYNOPSIS
@@ -136,19 +213,26 @@ function Save-File {
     .DESCRIPTION
         Attempts to download a file from a URI to a local path.
         It prioritizes aria2c for speed/resuming, falling back to PowerShell's native Invoke-WebRequest.
+        If ExpectedHash is provided and non-empty, verifies SHA256 after download.
     .PARAMETER Uri
         The source URL.
     .PARAMETER OutFile
         The destination file path.
+    .PARAMETER ExpectedHash
+        Optional SHA256 hash to verify after download. Empty string skips verification.
     #>
     param(
         [string]$Uri,
-        [string]$OutFile
+        [string]$OutFile,
+        [string]$ExpectedHash = ""
     )
     
     if (Test-Path $OutFile) {
         $FileName = Split-Path -Path $OutFile -Leaf
         Write-Log "File '$FileName' already exists. Skipping download." -Level 2 -Color Green
+        if ($ExpectedHash -and $ExpectedHash.Trim() -ne "") {
+            Confirm-FileHash -Path $OutFile -Expected $ExpectedHash
+        }
         return
     }
     Write-Log "Downloading `"$($Uri.Split('/')[-1])`"" -Level 2 -Color DarkGray
@@ -197,6 +281,9 @@ function Save-File {
             Write-Log "ERROR: Download failed for '$Uri'. Both aria2c and PowerShell failed. Error: $($_.Exception.Message)" -Color Red
             throw "Download failed."
         }
+    }
+    if ($ExpectedHash -and $ExpectedHash.Trim() -ne "") {
+        Confirm-FileHash -Path $OutFile -Expected $ExpectedHash
     }
 }
 
@@ -348,4 +435,4 @@ function Test-PyVersion {
 }
 
 # --- END OF FILE ---
-Export-ModuleMember -Function Write-Log, Invoke-AndLog, Save-File, Test-NvidiaGpu, Read-UserChoice, Get-GpuVramInfo, Test-PyVersion
+Export-ModuleMember -Function Write-Log, Invoke-AndLog, Save-File, Confirm-FileHash, Confirm-Authenticode, Set-ManagerUseUv, Test-NvidiaGpu, Read-UserChoice, Get-GpuVramInfo, Test-PyVersion

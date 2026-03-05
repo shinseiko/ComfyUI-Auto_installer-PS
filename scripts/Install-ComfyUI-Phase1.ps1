@@ -90,20 +90,47 @@ if ($RunAdminTasks) {
     }
     catch { Write-Host "- ERROR: Unable to enable long paths. $_" -ForegroundColor Red }
 
-    # Task 2: VS Build Tools
-    Write-Host "[Admin Task 2/2] Checking/Installing VS Build Tools..." -ForegroundColor Yellow
-    $depFileAdmin = Join-Path $scriptPath "dependencies.json"
-    $vsToolAdmin = $null
-    if (Test-Path $depFileAdmin) {
-        try { $depsAdmin = Get-Content -Raw -Path $depFileAdmin | ConvertFrom-Json } catch { $depsAdmin = $null }
-        if ($depsAdmin -ne $null -and $depsAdmin.PSObject.Properties.Name -contains 'tools' -and $depsAdmin.tools.PSObject.Properties.Name -contains 'vs_build_tools') {
-            $vsToolAdmin = $depsAdmin.tools.vs_build_tools
+    # Task 2: VS Build Tools (or compatible Visual Studio installation)
+    Write-Host "[Admin Task 2/2] Checking/Installing C++ build tools..." -ForegroundColor Yellow
+
+    # vswhere is the official tool to detect any VS installation with a specific workload
+    $vswherePath = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+    $msvcFound = $false
+
+    if (Test-Path $vswherePath) {
+        $vsInstallPath = & $vswherePath -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2>$null
+        if ($vsInstallPath) {
+            $msvcFound = $true
+            Write-Host "- C++ build tools found in: $vsInstallPath" -ForegroundColor Green
         }
     }
-    if ($vsToolAdmin -ne $null -and $vsToolAdmin.install_path) {
-        $vsInstallCheckPathAdmin = $ExecutionContext.InvokeCommand.ExpandString($vsToolAdmin.install_path)
-        if (-not (Test-Path $vsInstallCheckPathAdmin)) {
-            Write-Host "- Installing VS Build Tools..." -ForegroundColor Yellow
+
+    if (-not $msvcFound) {
+        # Fallback: check well-known paths for VS Build Tools and full VS editions
+        $vsCheckPaths = @(
+            "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC",
+            "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC",
+            "C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Tools\MSVC",
+            "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC",
+            "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC",
+            "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC"
+        )
+        foreach ($p in $vsCheckPaths) {
+            if (Test-Path $p) { $msvcFound = $true; Write-Host "- C++ build tools found at: $p" -ForegroundColor Green; break }
+        }
+    }
+
+    if (-not $msvcFound) {
+        $depFileAdmin = Join-Path $scriptPath "dependencies.json"
+        $vsToolAdmin = $null
+        if (Test-Path $depFileAdmin) {
+            try { $depsAdmin = Get-Content -Raw -Path $depFileAdmin | ConvertFrom-Json } catch { $depsAdmin = $null }
+            if ($depsAdmin -ne $null -and $depsAdmin.PSObject.Properties.Name -contains 'tools' -and $depsAdmin.tools.PSObject.Properties.Name -contains 'vs_build_tools') {
+                $vsToolAdmin = $depsAdmin.tools.vs_build_tools
+            }
+        }
+        if ($vsToolAdmin -ne $null -and $vsToolAdmin.url) {
+            Write-Host "- No compatible C++ tools found. Installing VS Build Tools..." -ForegroundColor Yellow
             $vsInstallerAdmin = Join-Path $env:TEMP "vs_buildtools_admin.exe"
             try {
                 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -115,9 +142,8 @@ if ($RunAdminTasks) {
             }
             catch { Write-Host "- ERROR: Failed to download/install VS Build Tools. $_" -ForegroundColor Red }
         }
-        else { Write-Host "- VS Build Tools already installed." -ForegroundColor Green }
+        else { Write-Host "- ERROR: Unable to find VS Build Tools info in dependencies.json." -ForegroundColor Red }
     }
-    else { Write-Host "- ERROR: Unable to find VS Build Tools information in '$depFileAdmin'." -ForegroundColor Red }
 
     Write-Host "`n=== Administrative tasks completed. Closing this window. ===" -ForegroundColor Green
     Start-Sleep -Seconds 3
@@ -137,15 +163,28 @@ else {
     }
     else { Write-Log "Long path support OK." -Level 2 -Color Green }
 
-    # Check VS Build Tools
-    if ($dependencies -ne $null -and $dependencies.tools -ne $null -and $dependencies.tools.vs_build_tools -ne $null -and $dependencies.tools.vs_build_tools.install_path) {
-        $vsInstallCheckPath = $ExecutionContext.InvokeCommand.ExpandString($dependencies.tools.vs_build_tools.install_path)
-        if (-not (Test-Path $vsInstallCheckPath)) {
-            Write-Log "VS Build Tools must be installed (Admin required)." -Level 2 -Color Yellow; $needsElevation = $true
-        }
-        else { Write-Log "VS Build Tools OK." -Level 2 -Color Green }
+    # Check C++ build tools (VS Build Tools or any compatible Visual Studio edition)
+    $vswherePathUser = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+    $msvcAvailable = $false
+    if (Test-Path $vswherePathUser) {
+        $vsInstallPathUser = & $vswherePathUser -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2>$null
+        if ($vsInstallPathUser) { $msvcAvailable = $true }
     }
-    else { Write-Log "WARNING: Unable to verify VS Build Tools. Elevation may be required." -Level 2 -Color Yellow; $needsElevation = $true }
+    if (-not $msvcAvailable) {
+        $vsCompatPaths = @(
+            "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC",
+            "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC",
+            "C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Tools\MSVC",
+            "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC",
+            "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC",
+            "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC"
+        )
+        foreach ($p in $vsCompatPaths) { if (Test-Path $p) { $msvcAvailable = $true; break } }
+    }
+    if (-not $msvcAvailable) {
+        Write-Log "C++ build tools not found (VS Build Tools or Visual Studio required)." -Level 2 -Color Yellow; $needsElevation = $true
+    }
+    else { Write-Log "C++ build tools OK." -Level 2 -Color Green }
 
     # Elevate if needed
     if ($needsElevation -and -not (Test-IsAdmin)) {
@@ -237,6 +276,38 @@ else {
     $env:PATH = "$aria2InstallPath;$env:PATH"
 
     # ---------------------------------------------------------
+    # UV INSTALLATION
+    # ---------------------------------------------------------
+    Write-Log "Checking/Installing uv (Python package manager)..." -Level 1
+    $uvBinPath = Join-Path $env:LOCALAPPDATA "Programs\uv"
+    $uvExePath  = Join-Path $uvBinPath "uv.exe"
+
+    if (-not (Test-Path $uvExePath)) {
+        Write-Log "Downloading uv installer..." -Level 2
+        $uvInstallerPath = Join-Path $env:TEMP "uv-install.ps1"
+        $uvInstallerUrl  = "https://astral.sh/uv/install.ps1"
+        $uvSha256 = if ($dependencies.tools.PSObject.Properties["uv"] -and $dependencies.tools.uv.PSObject.Properties["sha256"]) { [string]$dependencies.tools.uv.sha256 } else { "" }
+        try {
+            Save-File -Uri $uvInstallerUrl -OutFile $uvInstallerPath -ExpectedHash $uvSha256
+            Write-Log "Running uv installer..." -Level 2
+            $env:UV_INSTALL_DIR = $uvBinPath
+            & powershell -NoProfile -ExecutionPolicy Bypass -File $uvInstallerPath
+            Remove-Item $uvInstallerPath -ErrorAction SilentlyContinue
+            if (Test-Path $uvExePath) {
+                Write-Log "uv installed successfully." -Level 2 -Color Green
+            } else {
+                Write-Log "WARNING: uv installer ran but uv.exe not found at expected path." -Level 2 -Color Yellow
+            }
+        } catch {
+            Write-Log "WARNING: Failed to install uv. Package installs will use pip as fallback." -Level 2 -Color Yellow
+        }
+    } else {
+        Write-Log "uv is already installed." -Level 1 -Color Green
+    }
+    # Add uv to PATH for current session
+    if (Test-Path $uvBinPath) { $env:PATH = "$uvBinPath;$env:PATH" }
+
+    # ---------------------------------------------------------
     # GIT DETECTION AND INSTALLATION
     # ---------------------------------------------------------
     Write-Log "Checking for Git..." -Level 1
@@ -258,9 +329,13 @@ else {
             # Git for Windows 2.47.1 (64-bit) - Official Standalone Installer
             $gitUrl = "https://github.com/git-for-windows/git/releases/download/v2.47.1.windows.1/Git-2.47.1-64-bit.exe"
             $gitInstaller = Join-Path $env:TEMP "git-installer.exe"
+            $gitSha256 = if ($dependencies.tools.PSObject.Properties["git"] -and $dependencies.tools.git.PSObject.Properties["sha256"]) { [string]$dependencies.tools.git.sha256 } else { "" }
 
             try {
-                Save-File -Uri $gitUrl -OutFile $gitInstaller
+                Save-File -Uri $gitUrl -OutFile $gitInstaller -ExpectedHash $gitSha256
+                if ($dependencies.tools.PSObject.Properties["git"] -and $dependencies.tools.git.PSObject.Properties["authenticode_subject"] -and $dependencies.tools.git.authenticode_subject) {
+                    Confirm-Authenticode -Path $gitInstaller -ExpectedSubject $dependencies.tools.git.authenticode_subject
+                }
                 Write-Log "Installing Git (Please accept UAC if prompted)..." -Level 2
 
                 # Silent Install Arguments
@@ -341,15 +416,19 @@ else {
 
             if ($choice -eq "Y") {
                 Write-Log "Initiating Python 3.13 installation..." -Level 1
-                
+
                 # Official Python 3.13.11 URL (Stable)
                 $pyUrl = "https://www.python.org/ftp/python/3.13.11/python-3.13.11-amd64.exe"
                 $pyInstaller = Join-Path $env:TEMP "python-3.13.11-amd64.exe"
-                
+                $pySha256 = if ($dependencies.tools.PSObject.Properties["python"] -and $dependencies.tools.python.PSObject.Properties["sha256"]) { [string]$dependencies.tools.python.sha256 } else { "" }
+
                 try {
                     # Download
                     Write-Log "Downloading Python 3.13 installer..." -Level 2
-                    Save-File -Uri $pyUrl -OutFile $pyInstaller 
+                    Save-File -Uri $pyUrl -OutFile $pyInstaller -ExpectedHash $pySha256
+                    if ($dependencies.tools.PSObject.Properties["python"] -and $dependencies.tools.python.PSObject.Properties["authenticode_subject"] -and $dependencies.tools.python.authenticode_subject) {
+                        Confirm-Authenticode -Path $pyInstaller -ExpectedSubject $dependencies.tools.python.authenticode_subject
+                    } 
                     
                     # Installation
                     Write-Log "Installing Python (this may take a minute)..." -Level 2
@@ -360,8 +439,8 @@ else {
                         
                         # POST-INSTALLATION REDETECTION (Manual path check)
                         $possiblePaths = @(
-                            "C:\Program Files\Python312\python.exe",
-                            "$env:LOCALAPPDATA\Programs\Python\Python313\python.exe"
+                            "$env:LOCALAPPDATA\Programs\Python\Python313\python.exe",
+                            "C:\Program Files\Python313\python.exe"
                         )
                         
                         foreach ($path in $possiblePaths) {
@@ -407,9 +486,15 @@ else {
         $venvPath = Join-Path $scriptPath "venv"
         if (-not (Test-Path $venvPath)) {
             Write-Log "Creating virtual environment (venv) at '$venvPath'..." -Level 1
-            if ($pythonArgs) { $venvArgs = "$pythonArgs -m venv `"$venvPath`"" } 
-            else { $venvArgs = "-m venv `"$venvPath`"" }
-            Invoke-AndLog $pythonCommand $venvArgs
+            if (Get-Command "uv" -ErrorAction SilentlyContinue) {
+                Invoke-AndLog "uv" "venv `"$venvPath`" --python 3.13"
+            } else {
+                # Fallback to python -m venv if uv is not available
+                Write-Log "uv not found, falling back to python -m venv..." -Level 2 -Color Yellow
+                if ($pythonArgs) { $venvArgs = "$pythonArgs -m venv `"$venvPath`"" }
+                else { $venvArgs = "-m venv `"$venvPath`"" }
+                Invoke-AndLog $pythonCommand $venvArgs
+            }
         }
         else {
             Write-Log "Virtual environment already exists." -Level 1 -Color Green
@@ -440,10 +525,13 @@ Read-Host
         Write-Log "Setting up Miniconda and Conda Environment" -Level 0
         if (-not (Test-Path $condaPath)) {
             Write-Log "Miniconda not found. Installing..." -Level 1 -Color Yellow
-            $minicondaInstaller = Join-Path $env:TEMP "Miniconda3-latest-Windows-x86_64.exe"
-            $minicondaUrl = $dependencies.tools.miniconda.url
-            if (-not $minicondaUrl) { $minicondaUrl = "https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe" }
-            Save-File -Uri $minicondaUrl -OutFile $minicondaInstaller
+            $minicondaUrl = if ($dependencies.tools.PSObject.Properties["miniconda"] -and $dependencies.tools.miniconda.url) { $dependencies.tools.miniconda.url } else { "https://repo.anaconda.com/miniconda/Miniconda3-py313_25.1.1-2-Windows-x86_64.exe" }
+            $minicondaSha256 = if ($dependencies.tools.PSObject.Properties["miniconda"] -and $dependencies.tools.miniconda.PSObject.Properties["sha256"]) { [string]$dependencies.tools.miniconda.sha256 } else { "" }
+            $minicondaInstaller = Join-Path $env:TEMP "Miniconda3-Windows-x86_64.exe"
+            Save-File -Uri $minicondaUrl -OutFile $minicondaInstaller -ExpectedHash $minicondaSha256
+            if ($dependencies.tools.PSObject.Properties["miniconda"] -and $dependencies.tools.miniconda.PSObject.Properties["authenticode_subject"] -and $dependencies.tools.miniconda.authenticode_subject) {
+                Confirm-Authenticode -Path $minicondaInstaller -ExpectedSubject $dependencies.tools.miniconda.authenticode_subject
+            }
             Write-Log "Running Miniconda installer (this may take a minute)..." -Level 2
             $installerProcess = Start-Process -FilePath $minicondaInstaller -ArgumentList "/InstallationType=JustMe /RegisterPython=0 /S /D=$condaPath" -Wait -PassThru
             if ($installerProcess.ExitCode -ne 0) {

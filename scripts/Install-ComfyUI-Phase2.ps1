@@ -60,7 +60,6 @@ if (-not (Test-Path $logPath)) { New-Item -ItemType Directory -Force -Path $logP
 Import-Module (Join-Path $scriptPath "UmeAiRTUtils.psm1") -Force
 $global:logFile = Join-Path $logPath "install_log.txt"
 $global:hasGpu = Test-NvidiaGpu
-Write-Log "DEBUG: Loaded tools config: $($dependencies.tools | ConvertTo-Json -Depth 3)" -Level 3
 
 #===========================================================================
 # SECTION 1.5: ENVIRONMENT DETECTION (SAFETY NET)
@@ -180,26 +179,26 @@ try {
     $ninjaCheck = & $pythonExe -m pip show ninja 2>&1
     if ($LASTEXITCODE -ne 0) {
         Write-Log "Installing ninja..." -Level 1
-        Invoke-AndLog $pythonExe "-m pip install ninja"
+        Invoke-AndLog "uv" "pip install --python `"$pythonExe`" ninja"
     }
 }
 catch {
     Write-Log "Installing ninja..." -Level 1
-    Invoke-AndLog $pythonExe "-m pip install ninja"
+    Invoke-AndLog "uv" "pip install --python `"$pythonExe`" ninja"
 }
 
 Write-Log "Upgrading pip and wheel" -Level 1
-Invoke-AndLog $pythonExe "-m pip install --upgrade $($dependencies.pip_packages.upgrade -join ' ')"
+Invoke-AndLog "uv" "pip install --python `"$pythonExe`" --upgrade $($dependencies.pip_packages.upgrade -join ' ')"
 Write-Log "Installing torch packages" -Level 1
-Invoke-AndLog $pythonExe "-m pip install $($dependencies.pip_packages.torch.packages) --index-url $($dependencies.pip_packages.torch.index_url)"
+Invoke-AndLog "uv" "pip install --python `"$pythonExe`" $($dependencies.pip_packages.torch.packages) --index-url $($dependencies.pip_packages.torch.index_url)"
 
 Write-Log "Installing ComfyUI requirements" -Level 1
-Invoke-AndLog $pythonExe "-m pip install -r `"$comfyPath\$($dependencies.pip_packages.comfyui_requirements)`""
+Invoke-AndLog "uv" "pip install --python `"$pythonExe`" -r `"$comfyPath\$($dependencies.pip_packages.comfyui_requirements)`""
 
 # --- Step 4: Install Final Python Dependencies ---
 Write-Log "Installing Python Dependencies" -Level 0
 Write-Log "Installing standard packages..." -Level 1
-Invoke-AndLog $pythonExe "-m pip install $($dependencies.pip_packages.standard -join ' ')"
+Invoke-AndLog "uv" "pip install --python `"$pythonExe`" $($dependencies.pip_packages.standard -join ' ')"
 
 # --- Step 5: Install Custom Nodes (via ComfyUI-Manager CLI) ---
 Write-Log "Installing Custom Nodes via Manager CLI" -Level 0
@@ -219,8 +218,11 @@ if (-not (Test-Path $managerPath)) {
 $managerReqs = Join-Path $managerPath "requirements.txt"
 if (Test-Path $managerReqs) {
     Write-Log "Installing ComfyUI-Manager dependencies (typer, etc.)..." -Level 1
-    Invoke-AndLog $pythonExe "-m pip install -r `"$managerReqs`""
+    Invoke-AndLog "uv" "pip install --python `"$pythonExe`" -r `"$managerReqs`""
 }
+
+# 2b. Enable uv in ComfyUI Manager config
+Set-ManagerUseUv -InstallPath $InstallPath
 
 # 3. CLI Execution
 $cmCliScript = Join-Path $managerPath "cm-cli.py"
@@ -289,7 +291,7 @@ if (-not (Test-Path $umeSyncPath)) {
     Write-Log "Installing ComfyUI-UmeAiRT-Sync (for workflows auto-update)..." -Level 1 -Color Cyan
     Invoke-AndLog "git" "clone https://github.com/UmeAiRT/ComfyUI-UmeAiRT-Sync.git `"$umeSyncPath`""
     if (Test-Path "$umeSyncPath\requirements.txt") {
-        Invoke-AndLog "python" "-m pip install -r `"$umeSyncPath\requirements.txt`""
+        Invoke-AndLog "uv" "pip install --python `"$pythonExe`" -r `"$umeSyncPath\requirements.txt`""
     }
 }
 else {
@@ -342,17 +344,12 @@ foreach ($wheel in $dependencies.pip_packages.wheels) {
     $wheelPath = Join-Path $scriptPath "$($wheel.name).whl"
      
     try {
-        Save-File -Uri $wheel.url -OutFile $wheelPath
-        
+        $wheelSha256 = if ($wheel.PSObject.Properties["sha256"]) { [string]$wheel.sha256 } else { "" }
+        Save-File -Uri $wheel.url -OutFile $wheelPath -ExpectedHash $wheelSha256
+
         if (Test-Path $wheelPath) {
-            # Use $pythonExe
-            $output = & $pythonExe -m pip install "`"$wheelPath`"" 2>&1
-            if ($LASTEXITCODE -eq 0) {
-                Write-Log "$($wheel.name) installed successfully" -Level 3 -Color Green
-            }
-            else {
-                Write-Log "$($wheel.name) installation failed (continuing...)" -Level 3 -Color Yellow
-            }
+            Invoke-AndLog "uv" "pip install --python `"$pythonExe`" `"$wheelPath`""
+            Write-Log "$($wheel.name) installed successfully" -Level 3 -Color Green
             Remove-Item $wheelPath -ErrorAction SilentlyContinue
         }
     }
@@ -378,7 +375,8 @@ if (-not $isConda) {
     $installerDest = Join-Path $InstallPath $installerInfo.destination
 
     try {
-        Save-File -Uri $installerInfo.url -OutFile $installerDest
+        $dazzleSha256 = if ($installerInfo.PSObject.Properties["sha256"]) { [string]$installerInfo.sha256 } else { "" }
+        Save-File -Uri $installerInfo.url -OutFile $installerDest -ExpectedHash $dazzleSha256
 
         if (Test-Path $installerDest) {
             # Execute the smart installer script
@@ -407,17 +405,17 @@ else {
 
     # 2. Install Triton-Windows (Official PyPI for Py3.13)
     Write-Log "Installing Triton-Windows..." -Level 2
-    Invoke-AndLog $pythonExe "-m pip install triton-windows --no-warn-script-location"
+    Invoke-AndLog "uv" "pip install --python `"$pythonExe`" triton-windows --no-warn-script-location"
 
     # 3. Install SageAttention (Direct Install)
     Write-Log "Installing SageAttention..." -Level 2
     try {
-        Invoke-AndLog $pythonExe "-m pip install sageattention --no-warn-script-location --no-build-isolation"
+        Invoke-AndLog "uv" "pip install --python `"$pythonExe`" sageattention --no-warn-script-location --no-build-isolation"
         Write-Log "SageAttention installed successfully." -Level 2 -Color Green
     }
     catch {
         Write-Log "WARNING: Standard install failed. Retrying without dependency check..." -Level 2 -Color Yellow
-        Invoke-AndLog $pythonExe "-m pip install sageattention --no-deps --no-warn-script-location --no-build-isolation"
+        Invoke-AndLog "uv" "pip install --python `"$pythonExe`" sageattention --no-deps --no-warn-script-location --no-build-isolation"
     }
 }
 
@@ -439,7 +437,8 @@ if (-not (Test-Path $TargetDir)) {
 # 3. Download the file
 try {
     Write-Log "Downloading configuration file from UmeAiRT repository..." -Level 1
-    Invoke-WebRequest -Uri $JsonUrl -OutFile $TargetFile -ErrorAction Stop
+    $nunchakuJsonSha256 = if ($dependencies.files.PSObject.Properties["nunchaku_versions"] -and $dependencies.files.nunchaku_versions.PSObject.Properties["sha256"]) { [string]$dependencies.files.nunchaku_versions.sha256 } else { "" }
+    Save-File -Uri $JsonUrl -OutFile $TargetFile -ExpectedHash $nunchakuJsonSha256
     Write-Log "Success: nunchaku_versions.json installed." -Level 1 -Color Green
 }
 catch {
@@ -455,7 +454,8 @@ $settingsFile = $dependencies.files.comfy_settings
 $settingsDest = Join-Path $InstallPath $settingsFile.destination
 $settingsDir = Split-Path $settingsDest -Parent
 if (-not (Test-Path $settingsDir)) { New-Item -Path $settingsDir -ItemType Directory -Force | Out-Null }
-Save-File -Uri $settingsFile.url -OutFile $settingsDest
+$settingsSha256 = if ($settingsFile.PSObject.Properties["sha256"]) { [string]$settingsFile.sha256 } else { "" }
+Save-File -Uri $settingsFile.url -OutFile $settingsDest -ExpectedHash $settingsSha256
 
 
 # --- Step 7: Optional Model Pack Downloads ---
@@ -474,10 +474,10 @@ $modelPacks = @(
 $scriptsSubFolder = Join-Path $InstallPath "scripts"
 
 foreach ($pack in $modelPacks) {
-    $scriptPath = Join-Path $scriptsSubFolder $pack.ScriptName
-    if (-not (Test-Path $scriptPath)) {
+    $packScriptPath = Join-Path $scriptsSubFolder $pack.ScriptName
+    if (-not (Test-Path $packScriptPath)) {
         Write-Log "Model downloader script not found: '$($pack.ScriptName)'. Skipping." -Level 1 -Color Red
-        continue 
+        continue
     }
 
     $validInput = $false
@@ -488,7 +488,7 @@ foreach ($pack in $modelPacks) {
         if ($choice -eq 'Y' -or $choice -eq 'y') {
             Write-Log "Launching downloader for $($pack.Name) models..." -Level 2 -Color Green
             # External script call: We pass InstallPath
-            & $scriptPath -InstallPath $InstallPath
+            & $packScriptPath -InstallPath $InstallPath
             $validInput = $true
         }
         elseif ($choice -eq 'N' -or $choice -eq 'n') {
