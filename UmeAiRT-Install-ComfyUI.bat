@@ -92,7 +92,7 @@ set "ConfigSource=(defaults)"
     "if ($gh -match '[^a-zA-Z0-9_-]') { Write-Error 'gh_user contains invalid characters.'; exit 1 };" ^
     "if ($gn -match '[^a-zA-Z0-9_-]') { Write-Error 'gh_reponame contains invalid characters.'; exit 1 };" ^
     "if ($gb -match '[^a-zA-Z0-9_./-]') { Write-Error 'gh_branch contains invalid characters.'; exit 1 };" ^
-    "@('set GhUser='+$gh, 'set GhRepoName='+$gn, 'set GhBranch='+$gb, 'set ConfigSource='+$src) | Set-Content $o -Encoding ASCII"
+    "[System.IO.File]::WriteAllLines($o, [string[]]@('set GhUser='+$gh, 'set GhRepoName='+$gn, 'set GhBranch='+$gb, 'set ConfigSource='+$src))"
 
 if %errorlevel% neq 0 (
     echo [ERROR] Repository configuration validation failed. Check umeairt-user-config.json.
