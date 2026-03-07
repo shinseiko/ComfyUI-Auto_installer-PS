@@ -15,8 +15,11 @@
 #>
 
 param(
-    [string]$InstallPath = (Split-Path -Path $PSScriptRoot -Parent),
-    [string]$SnapshotPath = ""
+    [string]$InstallPath  = (Split-Path -Path $PSScriptRoot -Parent),
+    [string]$SnapshotPath = "",
+    [string]$GhUser       = "",   # empty = read from config
+    [string]$GhRepoName   = "",
+    [string]$GhBranch     = ""
 )
 
 #===========================================================================
@@ -54,6 +57,29 @@ Import-Module (Join-Path $PSScriptRoot "UmeAiRTUtils.psm1") -Force
 $global:logFile = $logFile
 $global:totalSteps = 4
 $global:currentStep = 0
+
+# --- Resolve fork config: CLI args take precedence over config file ---
+if (-not $GhUser) {
+    $cfgLines = Read-UserConfig `
+        -UserConfigFile (Join-Path $InstallPath 'umeairt-user-config.json') `
+        -RepoConfigFile (Join-Path $InstallPath 'repo-config.json')
+    $cfg = @{}
+    $cfgLines | ForEach-Object { $k, $v = $_ -split '=', 2; $cfg[$k] = $v }
+    $GhUser = $cfg.GhUser; $GhRepoName = $cfg.GhRepoName; $GhBranch = $cfg.GhBranch
+}
+
+# --- Bootstrap self-update ---
+$bootstrapUrl    = "https://github.com/$GhUser/$GhRepoName/raw/$GhBranch/scripts/Bootstrap-Downloader.ps1"
+$bootstrapScript = Join-Path $PSScriptRoot 'Bootstrap-Downloader.ps1'
+Write-Host "[INFO] Updating bootstrap and all scripts ($GhUser/$GhRepoName @ $GhBranch)..." -ForegroundColor Cyan
+try {
+    Invoke-WebRequest -Uri $bootstrapUrl -OutFile $bootstrapScript -UseBasicParsing -ErrorAction Stop
+    & $bootstrapScript -InstallPath $InstallPath -GhUser $GhUser -GhRepoName $GhRepoName -GhBranch $GhBranch -SkipSelf
+    Write-Host "[OK] All scripts are up-to-date." -ForegroundColor Green
+} catch {
+    Write-Host "[WARN] Bootstrap self-update failed: $($_.Exception.Message)" -ForegroundColor Yellow
+    Write-Host "[WARN] Continuing with existing scripts." -ForegroundColor Yellow
+}
 
 #===========================================================================
 # SECTION 1.5: ENVIRONMENT DETECTION

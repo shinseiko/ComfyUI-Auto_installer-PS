@@ -434,5 +434,51 @@ function Test-PyVersion {
     return $false
 }
 
+function Read-UserConfig {
+    <#
+    .SYNOPSIS
+        Reads GitHub repo settings from umeairt-user-config.json (or deprecated repo-config.json)
+        and outputs KEY=VALUE lines to stdout.
+    .PARAMETER UserConfigFile
+        Path to umeairt-user-config.json.
+    .PARAMETER RepoConfigFile
+        Path to repo-config.json (deprecated fallback).
+    .OUTPUTS
+        Four lines: GhUser=..., GhRepoName=..., GhBranch=..., ConfigSource=...
+    #>
+    param(
+        [Parameter(Mandatory)][string]$UserConfigFile,
+        [Parameter(Mandatory)][string]$RepoConfigFile
+    )
+
+    $gh  = 'UmeAiRT'
+    $gn  = 'ComfyUI-Auto_installer'
+    $gb  = 'main'
+    $src = '(defaults)'
+
+    if (Test-Path $UserConfigFile) {
+        $c   = Get-Content $UserConfigFile -Raw | ConvertFrom-Json
+        $src = 'umeairt-user-config.json'
+        if ($c.PSObject.Properties['gh_user']     -and $c.gh_user)     { $gh = $c.gh_user }
+        if ($c.PSObject.Properties['gh_reponame'] -and $c.gh_reponame) { $gn = $c.gh_reponame }
+        if ($c.PSObject.Properties['gh_branch']   -and $c.gh_branch)   { $gb = $c.gh_branch }
+    } elseif (Test-Path $RepoConfigFile) {
+        $c   = Get-Content $RepoConfigFile -Raw | ConvertFrom-Json
+        $src = 'repo-config.json (deprecated)'
+        if ($c.gh_user)     { $gh = $c.gh_user }
+        if ($c.gh_reponame) { $gn = $c.gh_reponame }
+        if ($c.gh_branch)   { $gb = $c.gh_branch }
+    }
+
+    if ($gh -match '[^a-zA-Z0-9_-]')   { Write-Error 'gh_user contains invalid characters.';     exit 1 }
+    if ($gn -match '[^a-zA-Z0-9_-]')   { Write-Error 'gh_reponame contains invalid characters.'; exit 1 }
+    if ($gb -match '[^a-zA-Z0-9_./-]') { Write-Error 'gh_branch contains invalid characters.';   exit 1 }
+
+    Write-Output "GhUser=$gh"
+    Write-Output "GhRepoName=$gn"
+    Write-Output "GhBranch=$gb"
+    Write-Output "ConfigSource=$src"
+}
+
 # --- END OF FILE ---
-Export-ModuleMember -Function Write-Log, Invoke-AndLog, Save-File, Confirm-FileHash, Confirm-Authenticode, Set-ManagerUseUv, Test-NvidiaGpu, Read-UserChoice, Get-GpuVramInfo, Test-PyVersion
+Export-ModuleMember -Function Write-Log, Invoke-AndLog, Save-File, Confirm-FileHash, Confirm-Authenticode, Set-ManagerUseUv, Test-NvidiaGpu, Read-UserChoice, Get-GpuVramInfo, Test-PyVersion, Read-UserConfig
