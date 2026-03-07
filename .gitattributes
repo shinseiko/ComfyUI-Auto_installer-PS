@@ -1,0 +1,24 @@
+# Default: normalize line endings to LF in the repo
+* text=auto
+
+# Windows-executed files must be CRLF — batch and PS fail or behave badly with LF
+*.bat           text eol=crlf
+*.ps1           text eol=crlf
+*.psm1          text eol=crlf
+*.psd1          text eol=crlf
+
+# Config and data files users edit on Windows
+*.example       text eol=crlf
+*.json          text eol=crlf
+*.csv           text eol=crlf
+*.md            text eol=crlf
+*.txt           text eol=crlf
+*.ini           text eol=crlf
+
+# Binaries — no line ending conversion
+*.exe           binary
+*.zip           binary
+*.whl           binary
+*.png           binary
+*.jpg           binary
+*.gif           binary

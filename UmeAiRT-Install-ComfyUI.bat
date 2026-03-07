@@ -118,11 +118,22 @@ if not exist "%ScriptsFolder%" (
 
 :: Download the bootstrap script
 echo [INFO] Downloading the bootstrap script...
-%PS_EXE% -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri '%BootstrapUrl%' -OutFile '%BootstrapScript%'"
+%PS_EXE% -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri '%BootstrapUrl%' -OutFile '%BootstrapScript%' -UseBasicParsing"
+if %errorlevel% neq 0 (
+    echo [ERROR] Failed to download bootstrap script from: %BootstrapUrl%
+    echo [ERROR] Check your internet connection and gh_user/gh_branch in umeairt-user-config.json.
+    pause
+    exit /b 1
+)
 
 :: Run the bootstrap script to download all other files
 echo [INFO] Running the bootstrap script to download all required files...
 %PS_EXE% -NoProfile -ExecutionPolicy Bypass -File "%BootstrapScript%" -InstallPath "%InstallPath%" -GhUser "%GhUser%" -GhRepoName "%GhRepoName%" -GhBranch "%GhBranch%"
+if %errorlevel% neq 0 (
+    echo [ERROR] Bootstrap script failed. See above for details.
+    pause
+    exit /b 1
+)
 echo [OK] Bootstrap download complete.
 echo.
 
