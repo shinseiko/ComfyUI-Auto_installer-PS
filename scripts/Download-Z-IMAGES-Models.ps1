@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Interactive downloader for Z-IMAGE Turbo models.
 .DESCRIPTION

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Bootstraps the installation by downloading all required scripts and configuration files.
 .DESCRIPTION

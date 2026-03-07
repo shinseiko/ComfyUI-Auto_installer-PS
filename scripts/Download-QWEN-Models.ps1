@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Interactive downloader for QWEN models.
 .DESCRIPTION

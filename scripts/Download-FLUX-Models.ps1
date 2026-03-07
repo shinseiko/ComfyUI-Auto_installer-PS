@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Interactive downloader for FLUX models.
 .DESCRIPTION

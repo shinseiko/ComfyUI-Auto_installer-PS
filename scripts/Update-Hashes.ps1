@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Populates sha256 fields in dependencies.json by downloading each artifact and hashing it.
 .DESCRIPTION

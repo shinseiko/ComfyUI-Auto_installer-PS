@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Interactive downloader for WAN 2.1 models.
 .DESCRIPTION

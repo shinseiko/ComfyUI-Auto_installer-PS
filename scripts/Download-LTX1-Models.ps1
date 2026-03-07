@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Interactive downloader for LTX-Video (LTX1) models.
 .DESCRIPTION

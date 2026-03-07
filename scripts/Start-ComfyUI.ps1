@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     ComfyUI launcher for UmeAiRT installer.
     Called by UmeAiRT-Start-ComfyUI.bat and UmeAiRT-Start-ComfyUI_LowVRAM.bat.
