@@ -10,8 +10,9 @@ title UmeAiRT ComfyUI Installer
 :: ============================================================================
 :: File: UmeAiRT-Install-ComfyUI.bat
 :: Description: Main entry point for the ComfyUI installation.
-::              Reads fork config, bootstraps all scripts, then launches
-::              Install-ComfyUI.ps1 which handles path selection and Phase 1.
+::              Reads fork config, downloads Install-ComfyUI.ps1, then launches
+::              it — Install-ComfyUI.ps1 handles the full bootstrap, path
+::              selection, config persistence, and Phase 1.
 :: Author: UmeAiRT
 :: ============================================================================
 
@@ -46,25 +47,17 @@ echo [INFO] Using: %GH_USER%/%GH_REPO% @ %GH_BRANCH%
 :: Create scripts folder if needed
 if not exist "%INSTALL_DIR%scripts/" md "%INSTALL_DIR%scripts"
 
-:: Download Bootstrap-Downloader.ps1 fresh, then run it to pull all required scripts
-set "BOOTSTRAP_SCRIPT=%INSTALL_DIR%scripts/Bootstrap-Downloader.ps1"
-set "BOOTSTRAP_URL=https://github.com/%GH_USER%/%GH_REPO%/raw/%GH_BRANCH%/scripts/Bootstrap-Downloader.ps1"
-echo [INFO] Downloading bootstrap script...
-"%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri $env:BOOTSTRAP_URL -OutFile $env:BOOTSTRAP_SCRIPT -UseBasicParsing -ErrorAction Stop"
+:: Download Install-ComfyUI.ps1 — it handles the full bootstrap and Phase 1
+set "INSTALL_SCRIPT=%INSTALL_DIR%scripts/Install-ComfyUI.ps1"
+set "INSTALL_URL=https://github.com/%GH_USER%/%GH_REPO%/raw/%GH_BRANCH%/scripts/Install-ComfyUI.ps1"
+echo [INFO] Downloading installer script...
+"%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri $env:INSTALL_URL -OutFile $env:INSTALL_SCRIPT -UseBasicParsing -ErrorAction Stop"
 if errorlevel 1 (
-    echo [ERROR] Failed to download bootstrap script. Check your internet connection.
+    echo [ERROR] Failed to download installer script. Check your internet connection.
     pause
     exit /b 1
 )
 
-echo [INFO] Running bootstrap to download all required files...
-"%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -File "%INSTALL_DIR%scripts/Bootstrap-Downloader.ps1" -InstallPath "%INSTALL_DIR%" -GhUser "%GH_USER%" -GhRepoName "%GH_REPO%" -GhBranch "%GH_BRANCH%"
-if errorlevel 1 (
-    echo [ERROR] Bootstrap failed. See above for details.
-    pause
-    exit /b 1
-)
-
-:: Launch Install-ComfyUI.ps1 — handles path selection, config persistence, and Phase 1
+:: Launch Install-ComfyUI.ps1 — handles path selection, full bootstrap, config persistence, and Phase 1
 "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -File "%INSTALL_DIR%scripts/Install-ComfyUI.ps1" %*
 if %errorlevel% neq 0 pause
