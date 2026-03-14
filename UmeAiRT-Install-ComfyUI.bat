@@ -58,6 +58,6 @@ if errorlevel 1 (
     exit /b 1
 )
 
-:: Launch Install-ComfyUI.ps1 — handles path selection, full bootstrap, config persistence, and Phase 1
-"%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -File "%INSTALL_DIR%scripts/Install-ComfyUI.ps1" %*
+:: Launch Install-ComfyUI.ps1 — pass resolved fork coords so it uses the right repo even before psm1 exists
+"%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -File "%INSTALL_DIR%scripts/Install-ComfyUI.ps1" -GhUser "%GH_USER%" -GhRepoName "%GH_REPO%" -GhBranch "%GH_BRANCH%" %*
 if %errorlevel% neq 0 pause
