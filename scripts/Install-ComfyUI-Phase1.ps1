@@ -162,6 +162,7 @@ else {
     # -------------------------------------------------------------------------
     # SUB-SECTION: Standard User Tasks (Pre-Checks)
     # -------------------------------------------------------------------------
+    $psExe = if (Get-Command pwsh -ErrorAction SilentlyContinue) { "pwsh" } else { "powershell.exe" }
     $needsElevation = $false
     Write-Log "Checking for prerequisites that may require admin rights..." -Level 1
 
@@ -206,7 +207,7 @@ else {
         Write-Host "Please accept the UAC prompt." -ForegroundColor Yellow
         $psArgs = "-ExecutionPolicy Bypass -NoProfile -File `"$($MyInvocation.MyCommand.Definition)`" -RunAdminTasks -InstallPath `"$InstallPath`""
         try {
-            $adminProcess = Start-Process powershell.exe -Verb RunAs -ArgumentList $psArgs -Wait -PassThru -ErrorAction Stop
+            $adminProcess = Start-Process $psExe -Verb RunAs -ArgumentList $psArgs -Wait -PassThru -ErrorAction Stop
             if ($adminProcess.ExitCode -ne 0) { throw "The administrator process failed (code $($adminProcess.ExitCode))." }
             Write-Host "`nAdmin configuration completed successfully. Resuming installation..." -ForegroundColor Green; Start-Sleep 2
         }
@@ -291,10 +292,11 @@ else {
     # UV INSTALLATION
     # ---------------------------------------------------------
     Write-Log "Checking/Installing uv (Python package manager)..." -Level 1
-    $uvBinPath = "$($env:LOCALAPPDATA.Replace('\','/'))/Programs/uv"
+    $uvBinPath  = "$($env:LOCALAPPDATA.Replace('\','/'))/Programs/uv"
     $uvExePath  = "$uvBinPath/uv.exe"
+    $uvSystemCmd = Get-Command uv -ErrorAction SilentlyContinue
 
-    if (-not (Test-Path $uvExePath)) {
+    if (-not $uvSystemCmd -and -not (Test-Path $uvExePath)) {
         Write-Log "Downloading uv installer..." -Level 2
         $uvInstallerPath = "$($env:TEMP.Replace('\','/'))/uv-install.ps1"
         $uvInstallerUrl  = "https://astral.sh/uv/install.ps1"
@@ -303,7 +305,7 @@ else {
             Save-File -Uri $uvInstallerUrl -OutFile $uvInstallerPath -ExpectedHash $uvSha256
             Write-Log "Running uv installer..." -Level 2
             $env:UV_INSTALL_DIR = $uvBinPath
-            & powershell -NoProfile -ExecutionPolicy Bypass -File $uvInstallerPath
+            & $psExe -NoProfile -ExecutionPolicy Bypass -File $uvInstallerPath
             Remove-Item $uvInstallerPath -ErrorAction SilentlyContinue
             if (Test-Path $uvExePath) {
                 Write-Log "uv installed successfully." -Level 2 -Color Green
@@ -313,11 +315,13 @@ else {
         } catch {
             Write-Log "WARNING: Failed to install uv. Package installs will use pip as fallback." -Level 2 -Color Yellow
         }
+    } elseif ($uvSystemCmd) {
+        Write-Log "uv found in system PATH ($($uvSystemCmd.Source))." -Level 1 -Color Green
     } else {
         Write-Log "uv is already installed." -Level 1 -Color Green
     }
-    # Add uv to PATH for current session
-    if (Test-Path $uvBinPath) { $env:PATH = "$uvBinPath;$env:PATH" }
+    # Add local uv bin to PATH only if uv wasn't found system-wide
+    if (-not $uvSystemCmd -and (Test-Path $uvBinPath)) { $env:PATH = "$uvBinPath;$env:PATH" }
 
     # ---------------------------------------------------------
     # GIT DETECTION AND INSTALLATION
@@ -612,7 +616,7 @@ Read-Host
 
     Write-Log "Phase 2 of the installation has been launched..." -Level 0
     Write-Log "A new window will open for Phase 2..." -Level 2
-    try { Start-Process powershell.exe -ArgumentList "-ExecutionPolicy Bypass -NoProfile -File `"$phase2LauncherPath`"" -Wait -ErrorAction Stop } catch { Write-Log "ERROR: Unable to launch Phase 2 ($($_.Exception.Message))." -Color Red; Read-Host "Press Enter."; exit 1 }
+    try { Start-Process $psExe -ArgumentList "-ExecutionPolicy Bypass -NoProfile -File `"$phase2LauncherPath`"" -Wait -ErrorAction Stop } catch { Write-Log "ERROR: Unable to launch Phase 2 ($($_.Exception.Message))." -Color Red; Read-Host "Press Enter."; exit 1 }
 
     #===========================================================================
     # FINALIZATION 
