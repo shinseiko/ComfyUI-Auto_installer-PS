@@ -101,7 +101,8 @@ if ($RunAdminTasks) {
     $msvcFound = $false
 
     if (Test-Path $vswherePath) {
-        $vsInstallPath = & $vswherePath -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2>$null
+        # -prerelease ensures preview/insider releases (e.g. VS 2026) are also detected
+        $vsInstallPath = & $vswherePath -latest -prerelease -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2>$null
         if ($vsInstallPath) {
             $msvcFound = $true
             Write-Host "- C++ build tools found in: $vsInstallPath" -ForegroundColor Green
@@ -111,6 +112,10 @@ if ($RunAdminTasks) {
     if (-not $msvcFound) {
         # Fallback: check well-known paths for VS Build Tools and full VS editions
         $vsCheckPaths = @(
+            "C:\Program Files\Microsoft Visual Studio\2026\Community\VC\Tools\MSVC",
+            "C:\Program Files\Microsoft Visual Studio\2026\Professional\VC\Tools\MSVC",
+            "C:\Program Files\Microsoft Visual Studio\2026\Enterprise\VC\Tools\MSVC",
+            "C:\Program Files (x86)\Microsoft Visual Studio\2026\BuildTools\VC\Tools\MSVC",
             "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC",
             "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC",
             "C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Tools\MSVC",
@@ -170,11 +175,16 @@ else {
     $vswherePathUser = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
     $msvcAvailable = $false
     if (Test-Path $vswherePathUser) {
-        $vsInstallPathUser = & $vswherePathUser -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2>$null
+        # -prerelease ensures preview/insider releases (e.g. VS 2026) are also detected
+        $vsInstallPathUser = & $vswherePathUser -latest -prerelease -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2>$null
         if ($vsInstallPathUser) { $msvcAvailable = $true }
     }
     if (-not $msvcAvailable) {
         $vsCompatPaths = @(
+            "C:\Program Files\Microsoft Visual Studio\2026\Community\VC\Tools\MSVC",
+            "C:\Program Files\Microsoft Visual Studio\2026\Professional\VC\Tools\MSVC",
+            "C:\Program Files\Microsoft Visual Studio\2026\Enterprise\VC\Tools\MSVC",
+            "C:\Program Files (x86)\Microsoft Visual Studio\2026\BuildTools\VC\Tools\MSVC",
             "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC",
             "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC",
             "C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Tools\MSVC",
