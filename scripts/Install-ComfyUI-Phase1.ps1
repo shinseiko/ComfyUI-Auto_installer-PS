@@ -101,7 +101,7 @@ if ($RunAdminTasks) {
     $msvcFound = $false
 
     if (Test-Path $vswherePath) {
-        # -prerelease ensures preview/insider releases (e.g. VS 2026) are also detected
+        # -prerelease includes preview/insider builds in addition to release versions
         $vsInstallPath = & $vswherePath -latest -prerelease -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2>$null
         if ($vsInstallPath) {
             $msvcFound = $true
@@ -175,7 +175,7 @@ else {
     $vswherePathUser = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
     $msvcAvailable = $false
     if (Test-Path $vswherePathUser) {
-        # -prerelease ensures preview/insider releases (e.g. VS 2026) are also detected
+        # -prerelease includes preview/insider builds in addition to release versions
         $vsInstallPathUser = & $vswherePathUser -latest -prerelease -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2>$null
         if ($vsInstallPathUser) { $msvcAvailable = $true }
     }
