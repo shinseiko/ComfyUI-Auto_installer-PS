@@ -316,6 +316,20 @@ try {
     Write-Log "ERROR: Global update failed. Check logs." -Level 1 -Color Red
 }
 
+# 2a. Re-pin managed wheels — cm-cli may downgrade packages like nunchaku via a node's own
+#     pyproject.toml/uv.toml index (e.g. nunchaku's pypi/nunchaku_index.html only lists 1.0.1
+#     for torch2.10). Reinstalling from our direct URLs bypasses those stale indices entirely.
+Write-Log "Re-pinning managed wheels..." -Level 1 -Color Cyan
+foreach ($wheel in $dependencies.pip_packages.wheels) {
+    Write-Log "Re-pinning $($wheel.name)..." -Level 2
+    try {
+        Invoke-AndLog "uv" "pip install --python `"$pythonExe`" `"$($wheel.url)`""
+        Write-Log "Re-pinned $($wheel.name)." -Level 2 -Color Green
+    } catch {
+        Write-Log "WARNING: Failed to re-pin $($wheel.name): $($_.Exception.Message)" -Level 2 -Color Yellow
+    }
+}
+
 # --- 3. Update Optimized Components (Triton/SageAttention) ---
 Write-Log "Updating Optimized Components (Triton/SageAttention)..." -Level 0 -Color Green
 $installerInfo = $dependencies.files.installer_script
