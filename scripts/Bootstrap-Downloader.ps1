@@ -21,9 +21,9 @@
 
 param(
     [string]$InstallPath,
-    [string]$GhUser = "UmeAiRT",
-    [string]$GhRepoName = "ComfyUI-Auto_installer",
-    [string]$GhBranch = "main",
+    [string]$GhUser      = "",   # empty = read from config, then fall back to upstream default
+    [string]$GhRepoName  = "",
+    [string]$GhBranch    = "",
     [switch]$v,   # -v  : also echo log entries to console
     [switch]$vv   # -vv : all of -v + show full URIs for each download
 )
@@ -31,6 +31,29 @@ $_verbosity = if ($vv) { 2 } elseif ($v) { 1 } else { 0 }
 
 # Inline path helper — UmeAiRTUtils.psm1 is not yet available during bootstrap
 function ConvertTo-ForwardSlash { param([string]$Path) $Path.Replace('\', '/') }
+
+# Inline config reader — no module dependency
+function _BsReadCfg {
+    param([string]$File, [string]$Key)
+    if (-not (Test-Path $File)) { return "" }
+    try {
+        $j = Get-Content $File -Raw | ConvertFrom-Json
+        if ($j.PSObject.Properties[$Key] -and $j.$Key) { return [string]$j.$Key }
+    } catch {}
+    return ""
+}
+
+# If fork settings not supplied, try config files before falling back to upstream defaults
+if (-not $GhUser -or -not $GhRepoName -or -not $GhBranch) {
+    foreach ($f in @("$InstallPath/umeairt-user-config.json", "$InstallPath/repo-config.json")) {
+        if (-not $GhUser)     { $GhUser     = _BsReadCfg $f "gh_user" }
+        if (-not $GhRepoName) { $GhRepoName = _BsReadCfg $f "gh_reponame" }
+        if (-not $GhBranch)   { $GhBranch   = _BsReadCfg $f "gh_branch" }
+    }
+    if (-not $GhUser)     { $GhUser     = "UmeAiRT" }
+    if (-not $GhRepoName) { $GhRepoName = "ComfyUI-Auto_installer" }
+    if (-not $GhBranch)   { $GhBranch   = "main" }
+}
 
 # Inline log helper — UmeAiRTUtils.psm1 not available during bootstrap
 function _AppendLog { param([string]$f, [string]$m)
@@ -76,7 +99,8 @@ $filesToDownload = @(
     @{ RepoPath = "UmeAiRT-Start-ComfyUI_LowVRAM.bat";   LocalPath = "UmeAiRT-Start-ComfyUI_LowVRAM.bat" },
     @{ RepoPath = "UmeAiRT-Download_models.bat";         LocalPath = "UmeAiRT-Download_models.bat" },
     @{ RepoPath = "UmeAiRT-Install-ComfyUI.bat";         LocalPath = "UmeAiRT-Install-ComfyUI.bat" },
-    @{ RepoPath = "UmeAiRT-Update-ComfyUI.bat";          LocalPath = "UmeAiRT-Update-ComfyUI.bat" }
+    @{ RepoPath = "UmeAiRT-Update-ComfyUI.bat";          LocalPath = "UmeAiRT-Update-ComfyUI.bat" },
+    @{ RepoPath = "UmeAiRT-Bootstrap.bat";               LocalPath = "UmeAiRT-Bootstrap.bat" }
 )
 
 Write-Host "[INFO] Downloading the latest versions of the installation scripts..."
