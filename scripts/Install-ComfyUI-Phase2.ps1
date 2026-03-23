@@ -419,17 +419,17 @@ else {
 
     # 2. Install Triton-Windows (Official PyPI for Py3.13)
     Write-Log "Installing Triton-Windows..." -Level 2
-    Invoke-AndLog "uv" @("pip", "install", "--python", $pythonExe, "triton-windows", "--no-warn-script-location")
+    Invoke-AndLog "uv" @("pip", "install", "--python", $pythonExe, "triton-windows")
 
     # 3. Install SageAttention (Direct Install)
     Write-Log "Installing SageAttention..." -Level 2
     try {
-        Invoke-AndLog "uv" @("pip", "install", "--python", $pythonExe, "sageattention", "--no-warn-script-location", "--no-build-isolation")
+        Invoke-AndLog "uv" @("pip", "install", "--python", $pythonExe, "sageattention", "--no-build-isolation")
         Write-Log "SageAttention installed successfully." -Level 2 -Color Green
     }
     catch {
         Write-Log "WARNING: Standard install failed. Retrying without dependency check..." -Level 2 -Color Yellow
-        Invoke-AndLog "uv" @("pip", "install", "--python", $pythonExe, "sageattention", "--no-deps", "--no-warn-script-location", "--no-build-isolation")
+        Invoke-AndLog "uv" @("pip", "install", "--python", $pythonExe, "sageattention", "--no-deps", "--no-build-isolation")
     }
 }
 

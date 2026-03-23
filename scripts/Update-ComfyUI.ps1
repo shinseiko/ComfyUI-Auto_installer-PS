@@ -19,6 +19,10 @@
 .PARAMETER BootstrapOnly
     Download all scripts fresh from the configured source and exit without running the update.
     Use this to repair a bit-rotted install before running the full update.
+.PARAMETER ResumeFromStep
+    Skip to a specific step number without re-running earlier steps.
+    Useful when a previous run failed partway through (e.g. -ResumeFromStep 3 skips Steps 1-2).
+    Valid values: 1 (default, run all), 2, 3.
 #>
 
 param(
@@ -29,7 +33,8 @@ param(
     [string]$GhBranch       = "",
     [switch]$v,                     # -v  : show [INFO] messages + command output on success
     [switch]$vv,                    # -vv : all of -v + print each command line before running
-    [switch]$BootstrapOnly          # download fresh scripts and exit; run again to update
+    [switch]$BootstrapOnly,         # download fresh scripts and exit; run again to update
+    [int]$ResumeFromStep    = 1     # skip to this step number (1=run all, 2=skip step 1, 3=skip steps 1-2)
 )
 
 #===========================================================================
@@ -109,7 +114,11 @@ Invoke-LogRotation "$logPath/bootstrap.log"
 $global:logFile = $logFile
 $global:Verbosity = if ($vv) { 2 } elseif ($v) { 1 } else { 0 }
 $global:totalSteps = 4
-$global:currentStep = 0
+if ($ResumeFromStep -lt 1 -or $ResumeFromStep -gt 3) {
+    Write-Host "[WARN] Invalid -ResumeFromStep value '$ResumeFromStep'. Valid: 1-3. Defaulting to 1." -ForegroundColor Yellow
+    $ResumeFromStep = 1
+}
+$global:currentStep = $ResumeFromStep - 1
 
 # --- Migrate repo-config.json → umeairt-user-config.json (one-time, for pre-fix/network-exposure installs) ---
 $userConfigFile  = "$InstallPath/umeairt-user-config.json"
@@ -201,20 +210,28 @@ Write-Log "=====================================================================
 Write-Log "             Starting UmeAiRT ComfyUI Update Process" -Level -2 -Color Yellow
 Write-Log "===============================================================================" -Level -2
 Write-Log "Python Executable used: $pythonExe" -Level 1
+if ($ResumeFromStep -gt 1) {
+    Write-Log "Resuming from Step $ResumeFromStep — skipping Step(s) 1-$($ResumeFromStep - 1)." -Color Cyan
+}
+
+# Defined here so cleanup block can reference it even when Step 2 is skipped
+$managerPath = "$internalCustomNodesPath/ComfyUI-Manager"
 
 # --- 1. Update Git Repositories (Core & Workflows) ---
+if ($ResumeFromStep -le 1) {
 Write-Log "Updating Core Git repositories..." -Level 0 -Color Green
 Write-Log "Updating ComfyUI Core..." -Level 1
 Invoke-AndLog "git" @("-C", $comfyPath, "pull")
 Write-Log "Checking main ComfyUI requirements..." -Level 1
 $mainReqs = "$comfyPath/requirements.txt"
 Invoke-AndLog "uv" @("pip", "install", "--python", $pythonExe, "-r", $mainReqs)
+} # end Step 1
 
 # --- 2. Update and Install Custom Nodes (Manager CLI) ---
+if ($ResumeFromStep -le 2) {
 Write-Log "Updating/Installing Custom Nodes..." -Level 0 -Color Green
 
 # --- A. Update ComfyUI-Manager FIRST ---
-$managerPath = "$internalCustomNodesPath/ComfyUI-Manager"
 Write-Log "Updating ComfyUI-Manager..." -Level 1
 if (Test-Path $managerPath) {
     Invoke-AndLog "git" @("-C", $managerPath, "pull")
@@ -371,6 +388,8 @@ foreach ($wheel in $dependencies.pip_packages.wheels) {
     }
 }
 
+} # end Step 2
+
 # --- 3. Update Optimized Components (Triton/SageAttention) ---
 Write-Log "Updating Optimized Components (Triton/SageAttention)..." -Level 0 -Color Green
 
@@ -405,16 +424,16 @@ else {
     if ($env:CUDA_PATH) { $env:CUDA_HOME = $env:CUDA_PATH }
 
     Write-Log "Upgrading Triton-Windows..." -Level 2
-    Invoke-AndLog "uv" @("pip", "install", "--python", $pythonExe, "triton-windows", "--no-warn-script-location")
+    Invoke-AndLog "uv" @("pip", "install", "--python", $pythonExe, "triton-windows")
 
     Write-Log "Upgrading SageAttention..." -Level 2
     try {
-        Invoke-AndLog "uv" @("pip", "install", "--python", $pythonExe, "sageattention", "--no-warn-script-location", "--no-build-isolation")
+        Invoke-AndLog "uv" @("pip", "install", "--python", $pythonExe, "sageattention", "--no-build-isolation")
         Write-Log "SageAttention upgraded successfully." -Level 2 -Color Green
     }
     catch {
         Write-Log "WARNING: Standard upgrade failed. Retrying without dependency check..." -Level 2 -Color Yellow
-        Invoke-AndLog "uv" @("pip", "install", "--python", $pythonExe, "sageattention", "--no-deps", "--no-warn-script-location", "--no-build-isolation")
+        Invoke-AndLog "uv" @("pip", "install", "--python", $pythonExe, "sageattention", "--no-deps", "--no-build-isolation")
     }
 }
 

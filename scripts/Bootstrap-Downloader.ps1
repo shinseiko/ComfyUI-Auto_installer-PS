@@ -100,7 +100,9 @@ $filesToDownload = @(
     @{ RepoPath = "UmeAiRT-Download_models.bat";         LocalPath = "UmeAiRT-Download_models.bat" },
     @{ RepoPath = "UmeAiRT-Install-ComfyUI.bat";         LocalPath = "UmeAiRT-Install-ComfyUI.bat" },
     @{ RepoPath = "UmeAiRT-Update-ComfyUI.bat";          LocalPath = "UmeAiRT-Update-ComfyUI.bat" },
-    @{ RepoPath = "UmeAiRT-Bootstrap.bat";               LocalPath = "UmeAiRT-Bootstrap.bat" }
+    @{ RepoPath = "UmeAiRT-Bootstrap.bat";               LocalPath = "UmeAiRT-Bootstrap.bat" },
+    # Self-update: ensures this script picks up fixes on next run
+    @{ RepoPath = "scripts/Bootstrap-Downloader.ps1";   LocalPath = "scripts/Bootstrap-Downloader.ps1" }
 )
 
 Write-Host "[INFO] Downloading the latest versions of the installation scripts..."
@@ -119,6 +121,11 @@ foreach ($file in $filesToDownload) {
     $outDir = ConvertTo-ForwardSlash (Split-Path -Path $outFile -Parent)
     if (-not (Test-Path $outDir)) {
         New-Item -ItemType Directory -Path $outDir -Force | Out-Null
+    }
+
+    # Clear read-only attribute if file already exists, so overwrite succeeds
+    if (Test-Path $outFile) {
+        Set-ItemProperty -Path $outFile -Name IsReadOnly -Value $false -ErrorAction SilentlyContinue
     }
 
     Write-Host "  - Downloading $($file.RepoPath)..."
