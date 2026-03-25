@@ -18,7 +18,9 @@ param(
     [string]$InstallPath  = "",
     [string]$GhUser       = "UmeAiRT",
     [string]$GhRepoName   = "ComfyUI-Auto_installer-PS",
-    [string]$GhBranch     = "main"
+    [string]$GhBranch     = "main",
+    [switch]$v,   # -v  : show [INFO] messages + command output on success
+    [switch]$vv   # -vv : all of -v + print each command line before running
 )
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -175,4 +177,6 @@ $configObj | ConvertTo-Json -Depth 10 | Set-Content $userConfigFile -Encoding UT
 Write-Host "[INFO] Launching Phase 1 installer..." -ForegroundColor Cyan
 Write-Host ""
 $phase1 = "$scriptsFolder/Install-ComfyUI-Phase1.ps1"
-& $phase1 -InstallPath $InstallPath
+$verbSplat = @{}
+if ($vv) { $verbSplat.vv = $true } elseif ($v) { $verbSplat.v = $true }
+& $phase1 -InstallPath $InstallPath @verbSplat
