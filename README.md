@@ -9,6 +9,16 @@
 > - ✅ Better dependency management (uv)
 >
 > 👉 **[Switch to the Python version](https://github.com/UmeAiRT/ComfyUI-Auto_installer-Python)**
+>
+> ### Migrate your existing installation
+>
+> All your data (models, outputs, custom nodes) will be preserved:
+>
+> ```powershell
+> irm https://get.umeai.art/migrate.ps1 | iex
+> ```
+>
+> ⚠️ Back up your installation folder before running. See the [migration guide](https://github.com/UmeAiRT/ComfyUI-Auto_installer-Python/blob/main/docs/migration.md) for details.
 
 # UmeAiRT's ComfyUI Auto-Installer (Legacy PowerShell)
 
