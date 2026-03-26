@@ -117,8 +117,20 @@ $optimalParallelJobs = [int][Math]::Floor(($totalCores * 3) / 4)
 if ($optimalParallelJobs -lt 1) { $optimalParallelJobs = 1 }
 
 # --- Step 1: Git Configuration ---
-Write-Log "Configuring Git to handle long paths (system-wide)..." -Level 1
-try { Invoke-AndLog "git" @("config", "--system", "core.longpaths", "true") -IgnoreErrors } catch { Write-Log "Warning: Failed to set git config (might need admin)." -Level 2 -Color Yellow }
+# Use --global (user-level) so no admin rights are needed.
+# Check first to avoid unnecessary writes and misleading output.
+$lpCurrent = (& git config --global core.longpaths 2>&1)
+if ($LASTEXITCODE -eq 0 -and $lpCurrent -eq "true") {
+    Write-Log "Git long paths already enabled." -Level 3
+} else {
+    Write-Log "Enabling Git long paths support (user config)..." -Level 1
+    & git config --global core.longpaths true 2>&1 | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Log "Git long paths enabled." -Level 2 -Color Green
+    } else {
+        Write-Log "Warning: Could not set git long paths. If you encounter path errors, run: git config --global core.longpaths true" -Level 1 -Color Yellow
+    }
+}
 
 # --- Step 2: Clone ComfyUI ---
 Write-Log "Cloning ComfyUI" -Level 0
