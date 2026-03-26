@@ -37,7 +37,7 @@ function Get-UrlHash {
 }
 
 function Update-Entry {
-    param($Entry, [string]$Label)
+    param($Entry, [string]$Label, [switch]$Force)
     if (-not $Entry.PSObject.Properties["sha256"]) { return }
     if ($Entry.sha256 -ne "" -and -not $Force) { return }
     Write-Host $Label -ForegroundColor Cyan
@@ -51,15 +51,15 @@ function Update-Entry {
 }
 
 foreach ($key in $json.tools.PSObject.Properties.Name) {
-    Update-Entry -Entry $json.tools.$key -Label "tools.$key"
+    Update-Entry -Entry $json.tools.$key -Label "tools.$key" -Force:$Force
 }
 
 foreach ($wheel in $json.pip_packages.wheels) {
-    Update-Entry -Entry $wheel -Label "pip_packages.wheels[$($wheel.name)]"
+    Update-Entry -Entry $wheel -Label "pip_packages.wheels[$($wheel.name)]" -Force:$Force
 }
 
 foreach ($key in $json.files.PSObject.Properties.Name) {
-    Update-Entry -Entry $json.files.$key -Label "files.$key"
+    Update-Entry -Entry $json.files.$key -Label "files.$key" -Force:$Force
 }
 
 Remove-Item $tmpDir -Recurse -ErrorAction SilentlyContinue
