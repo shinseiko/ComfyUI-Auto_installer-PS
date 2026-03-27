@@ -1,10 +1,13 @@
 param(
-    [string]$InstallPath = ((Split-Path $PSScriptRoot -Parent).Replace('\', '/'))
+    [string]$InstallPath  = ((Split-Path $PSScriptRoot -Parent).Replace('\', '/')),
+    [switch]$DownloadAll, # Skip all prompts and download everything for every model pack
+    [switch]$v,           # -v  : show [INFO] messages
+    [switch]$vv           # -vv : all of -v + print each command line before running
 )
 
 $scriptsDir = $PSScriptRoot.Replace('\', '/')
 
-$scriptMap = @{
+$scriptMap = [ordered]@{
     '1' = 'Download-FLUX-Models.ps1'
     '2' = 'Download-WAN2.1-Models.ps1'
     '3' = 'Download-WAN2.2-Models.ps1'
@@ -13,6 +16,32 @@ $scriptMap = @{
     '6' = 'Download-LTX2-Models.ps1'
     '7' = 'Download-QWEN-Models.ps1'
     '8' = 'Download-Z-IMAGES-Models.ps1'
+}
+
+# Build common splatted args passed to every sub-script
+$commonArgs = @{ InstallPath = $InstallPath }
+if ($vv) { $commonArgs['vv'] = $true } elseif ($v) { $commonArgs['v'] = $true }
+
+if ($DownloadAll) {
+    Write-Host "=================================================" -ForegroundColor Cyan
+    Write-Host "    UmeAiRT Model Downloader — Download All"      -ForegroundColor Cyan
+    Write-Host "=================================================" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "  -DownloadAll: skipping all prompts, downloading everything." -ForegroundColor Yellow
+    Write-Host ""
+    foreach ($entry in $scriptMap.GetEnumerator()) {
+        $target = "$scriptsDir/$($entry.Value)"
+        Write-Host "--- $($entry.Value) ---" -ForegroundColor Cyan
+        if (Test-Path $target) {
+            & $target @commonArgs -DownloadAll
+        } else {
+            Write-Host "[ERROR] Script not found: $($entry.Value)" -ForegroundColor Red
+        }
+        Write-Host ""
+    }
+    Write-Host "[OK] All model packs downloaded." -ForegroundColor Green
+    Read-Host "Press Enter to exit"
+    return
 }
 
 while ($true) {
@@ -42,7 +71,7 @@ while ($true) {
     if ($scriptMap.ContainsKey($choice)) {
         $target = "$scriptsDir/$($scriptMap[$choice])"
         if (Test-Path $target) {
-            & $target -InstallPath $InstallPath
+            & $target @commonArgs
         } else {
             Write-Host "[ERROR] Script not found: $($scriptMap[$choice])" -ForegroundColor Red
         }

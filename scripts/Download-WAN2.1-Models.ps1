@@ -10,7 +10,10 @@
 #>
 
 param(
-    [string]$InstallPath = $PSScriptRoot
+    [string]$InstallPath = $PSScriptRoot,
+    [switch]$DownloadAll,
+    [switch]$v,
+    [switch]$vv
 )
 
 # ============================================================================
@@ -18,6 +21,7 @@ param(
 # ============================================================================
 $InstallPath = $InstallPath.Trim('"')
 Import-Module (Join-Path $PSScriptRoot "UmeAiRTUtils.psm1") -Force
+$global:Verbosity = if ($vv) { 2 } elseif ($v) { 1 } else { 0 }
 
 # ============================================================================
 # MAIN EXECUTION
@@ -47,14 +51,19 @@ else {
 Write-Log "-------------------------------------------------------------------------------"
 
 # --- User Prompts ---
-$baseChoice = Read-UserChoice -Prompt "Do you want to download WAN base models?" -Choices @("A) bf16", "B) fp16", "C) fp8", "D) All", "E) No") -ValidAnswers @("A", "B", "C", "D", "E")
-$ggufT2VChoice = Read-UserChoice -Prompt "Do you want to download WAN text-to-video GGUF models?" -Choices @("A) Q8_0", "B) Q5_K_M", "C) Q3_K_S", "D) All", "E) No") -ValidAnswers @("A", "B", "C", "D", "E")
-$gguf480Choice = Read-UserChoice -Prompt "Do you want to download WAN image-to-video 480p GGUF models?" -Choices @("A) Q8_0", "B) Q5_K_M", "C) Q3_K_S", "D) All", "E) No") -ValidAnswers @("A", "B", "C", "D", "E")
-$gguf720Choice = Read-UserChoice -Prompt "Do you want to download WAN image-to-video 720p GGUF models?" -Choices @("A) Q8_0", "B) Q5_K_M", "C) Q3_K_S", "D) All", "E) No") -ValidAnswers @("A", "B", "C", "D", "E")
-$controlChoice = Read-UserChoice -Prompt "Do you want to download WAN FUN CONTROL base models?" -Choices @("A) bf16", "B) fp8", "C) All", "D) No") -ValidAnswers @("A", "B", "C", "D")
-$controlGgufChoice = Read-UserChoice -Prompt "Do you want to download WAN FUN CONTROL GGUF models?" -Choices @("A) Q8_0", "B) Q5_K_M", "C) Q3_K_S", "D) All", "E) No") -ValidAnswers @("A", "B", "C", "D", "E")
-$vaceChoice = Read-UserChoice -Prompt "Do you want to download WAN VACE base models?" -Choices @("A) fp16", "B) fp8", "C) All", "D) No") -ValidAnswers @("A", "B", "C", "D")
-$vaceGgufChoice = Read-UserChoice -Prompt "Do you want to download WAN VACE GGUF models?" -Choices @("A) Q8_0", "B) Q5_K_M", "C) Q4_K_S", "D) All", "E) No") -ValidAnswers @("A", "B", "C", "D", "E")
+if ($DownloadAll) {
+    $baseChoice = 'D'; $ggufT2VChoice = 'D'; $gguf480Choice = 'D'; $gguf720Choice = 'D'
+    $controlChoice = 'C'; $controlGgufChoice = 'D'; $vaceChoice = 'C'; $vaceGgufChoice = 'D'
+} else {
+    $baseChoice = Read-UserChoice -Prompt "Do you want to download WAN base models?" -Choices @("A) bf16", "B) fp16", "C) fp8", "D) All", "E) No") -ValidAnswers @("A", "B", "C", "D", "E")
+    $ggufT2VChoice = Read-UserChoice -Prompt "Do you want to download WAN text-to-video GGUF models?" -Choices @("A) Q8_0", "B) Q5_K_M", "C) Q3_K_S", "D) All", "E) No") -ValidAnswers @("A", "B", "C", "D", "E")
+    $gguf480Choice = Read-UserChoice -Prompt "Do you want to download WAN image-to-video 480p GGUF models?" -Choices @("A) Q8_0", "B) Q5_K_M", "C) Q3_K_S", "D) All", "E) No") -ValidAnswers @("A", "B", "C", "D", "E")
+    $gguf720Choice = Read-UserChoice -Prompt "Do you want to download WAN image-to-video 720p GGUF models?" -Choices @("A) Q8_0", "B) Q5_K_M", "C) Q3_K_S", "D) All", "E) No") -ValidAnswers @("A", "B", "C", "D", "E")
+    $controlChoice = Read-UserChoice -Prompt "Do you want to download WAN FUN CONTROL base models?" -Choices @("A) bf16", "B) fp8", "C) All", "D) No") -ValidAnswers @("A", "B", "C", "D")
+    $controlGgufChoice = Read-UserChoice -Prompt "Do you want to download WAN FUN CONTROL GGUF models?" -Choices @("A) Q8_0", "B) Q5_K_M", "C) Q3_K_S", "D) All", "E) No") -ValidAnswers @("A", "B", "C", "D", "E")
+    $vaceChoice = Read-UserChoice -Prompt "Do you want to download WAN VACE base models?" -Choices @("A) fp16", "B) fp8", "C) All", "D) No") -ValidAnswers @("A", "B", "C", "D")
+    $vaceGgufChoice = Read-UserChoice -Prompt "Do you want to download WAN VACE GGUF models?" -Choices @("A) Q8_0", "B) Q5_K_M", "C) Q4_K_S", "D) All", "E) No") -ValidAnswers @("A", "B", "C", "D", "E")
+}
 
 # --- Download Process ---
 Write-Log "Starting WAN model downloads..." -Color Cyan
@@ -199,4 +208,4 @@ if ($vaceGgufChoice -ne 'E') {
 
 Show-DownloadSummary
 Write-Log "WAN model downloads complete." -Color Green
-Read-Host "Press Enter to return to the main installer."
+if (-not $DownloadAll) { Read-Host "Press Enter to return to the main installer." }

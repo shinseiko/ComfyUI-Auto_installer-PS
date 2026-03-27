@@ -10,7 +10,10 @@
 #>
 
 param(
-    [string]$InstallPath = $PSScriptRoot
+    [string]$InstallPath = $PSScriptRoot,
+    [switch]$DownloadAll,
+    [switch]$v,
+    [switch]$vv
 )
 
 # ============================================================================
@@ -18,6 +21,7 @@ param(
 # ============================================================================
 $InstallPath = $InstallPath.Trim('"')
 Import-Module (Join-Path $PSScriptRoot "UmeAiRTUtils.psm1") -Force
+$global:Verbosity = if ($vv) { 2 } elseif ($v) { 1 } else { 0 }
 
 # ============================================================================
 # MAIN EXECUTION
@@ -48,12 +52,17 @@ else {
 Write-Log "-------------------------------------------------------------------------------"
 
 # --- User Prompts ---
-$T2VChoice = Read-UserChoice -Prompt "Do you want to download WAN text-to-video models?" -Choices @("A) fp16", "B) fp8", "C) Q8_0", "D) Q5_K_M", "E) Q3_K_S", "F) All", "G) No") -ValidAnswers @("A", "B", "C", "D", "E", "F", "G")
-$I2VChoice = Read-UserChoice -Prompt "Do you want to download WAN image-to-video models?" -Choices @("A) fp16", "B) fp8", "C) Q8_0", "D) Q5_K_M", "E) Q3_K_S", "F) All", "G) No") -ValidAnswers @("A", "B", "C", "D", "E", "F", "G")
-$LoRAChoice = Read-UserChoice -Prompt "Do you want to download Lightning LoRA ?" -Choices @("A) Yes", "B) No") -ValidAnswers @("A", "B")
-$funcontrolChoice = Read-UserChoice -Prompt "Do you want to download WAN FUN CONTROL models?" -Choices @("A) fp16", "B) fp8", "C) Q8_0", "D) Q5_K_M", "E) Q3_K_S", "F) All", "G) No") -ValidAnswers @("A", "B", "C", "D", "E", "F", "G")
-$funinpaintChoice = Read-UserChoice -Prompt "Do you want to download WAN FUN INPAINT models?" -Choices @("A) fp16", "B) fp8", "C) Q8_0", "D) Q5_K_M", "E) Q3_K_S", "F) All", "G) No") -ValidAnswers @("A", "B", "C", "D", "E", "F", "G")
-$funcameraChoice = Read-UserChoice -Prompt "Do you want to download WAN FUN CAMERA CONTROL models?" -Choices @("A) fp16", "B) fp8", "C) Q8_0", "D) Q5_K_M", "E) Q3_K_S", "F) All", "G) No") -ValidAnswers @("A", "B", "C", "D", "E", "F", "G")
+if ($DownloadAll) {
+    $T2VChoice = 'F'; $I2VChoice = 'F'; $LoRAChoice = 'A'
+    $funcontrolChoice = 'F'; $funinpaintChoice = 'F'; $funcameraChoice = 'F'
+} else {
+    $T2VChoice = Read-UserChoice -Prompt "Do you want to download WAN text-to-video models?" -Choices @("A) fp16", "B) fp8", "C) Q8_0", "D) Q5_K_M", "E) Q3_K_S", "F) All", "G) No") -ValidAnswers @("A", "B", "C", "D", "E", "F", "G")
+    $I2VChoice = Read-UserChoice -Prompt "Do you want to download WAN image-to-video models?" -Choices @("A) fp16", "B) fp8", "C) Q8_0", "D) Q5_K_M", "E) Q3_K_S", "F) All", "G) No") -ValidAnswers @("A", "B", "C", "D", "E", "F", "G")
+    $LoRAChoice = Read-UserChoice -Prompt "Do you want to download Lightning LoRA ?" -Choices @("A) Yes", "B) No") -ValidAnswers @("A", "B")
+    $funcontrolChoice = Read-UserChoice -Prompt "Do you want to download WAN FUN CONTROL models?" -Choices @("A) fp16", "B) fp8", "C) Q8_0", "D) Q5_K_M", "E) Q3_K_S", "F) All", "G) No") -ValidAnswers @("A", "B", "C", "D", "E", "F", "G")
+    $funinpaintChoice = Read-UserChoice -Prompt "Do you want to download WAN FUN INPAINT models?" -Choices @("A) fp16", "B) fp8", "C) Q8_0", "D) Q5_K_M", "E) Q3_K_S", "F) All", "G) No") -ValidAnswers @("A", "B", "C", "D", "E", "F", "G")
+    $funcameraChoice = Read-UserChoice -Prompt "Do you want to download WAN FUN CAMERA CONTROL models?" -Choices @("A) fp16", "B) fp8", "C) Q8_0", "D) Q5_K_M", "E) Q3_K_S", "F) All", "G) No") -ValidAnswers @("A", "B", "C", "D", "E", "F", "G")
+}
 
 # --- Download Process ---
 Write-Log "Starting WAN 2.2 model downloads..." -Color Cyan
@@ -212,4 +221,4 @@ if ($funcameraChoice -ne 'G') {
 
 Show-DownloadSummary
 Write-Log "WAN2.2 model downloads complete." -Color Green
-Read-Host "Press Enter to return to the main installer."
+if (-not $DownloadAll) { Read-Host "Press Enter to return to the main installer." }

@@ -1,4 +1,4 @@
-<!-- Generated: 2026-03-25 | Source files: 24 | Token estimate: ~1200 -->
+<!-- Generated: 2026-03-27 | Source files: 26 | Token estimate: ~1300 -->
 
 # Architecture
 
@@ -16,7 +16,7 @@ UmeAiRT-Update-ComfyUI.bat        → thin passthrough → Update-ComfyUI.ps1 %*
 UmeAiRT-Bootstrap.bat             → reads fork config → rescue-downloads Bootstrap-Downloader.ps1 if missing → runs it
 UmeAiRT-Start-ComfyUI.bat         → calls scripts/Start-ComfyUI.ps1 (thin wrapper)
 UmeAiRT-Start-ComfyUI_LowVRAM.bat → calls scripts/Start-ComfyUI.ps1 -LowVRAM (thin wrapper)
-UmeAiRT-Download_models.bat       → numeric menu (1-8, Q quit) via set /p → Download-{MODEL}-Models.ps1
+UmeAiRT-Download_models.bat       → passes %* args → Download-Models.ps1 (interactive menu or -DownloadAll)
 ```
 
 ## Fork Configuration
@@ -31,6 +31,8 @@ No hardcoded upstream URLs in any entry point — all use resolved fork coordina
 `Bootstrap-Downloader.ps1` downloads all project files (15 PS1 + 6 bat + 4 config) from
 `raw.githubusercontent.com` using resolved fork coords. Includes itself as last entry
 (self-update). Clears read-only attributes before overwriting. Logs to `logs/bootstrap.log`.
+Resolves and displays the branch's current commit hash via GitHub API (best-effort) so the
+user can confirm exactly what version was pulled.
 
 `UmeAiRT-Bootstrap.bat` is a standalone rescue tool — reads fork config, downloads
 `Bootstrap-Downloader.ps1` if missing, passes fork coords through.
@@ -124,8 +126,8 @@ Supports `--ResumeFromStep N` to skip completed steps on retry.
 | `scripts/Install-ComfyUI-Phase2.ps1` | 523 | ComfyUI clone + deps + nodes + models |
 | `scripts/Update-ComfyUI.ps1` | 448 | Updater with --ResumeFromStep support |
 | `scripts/Start-ComfyUI.ps1` | 213 | ComfyUI launcher (env detection + network config) |
-| `scripts/Bootstrap-Downloader.ps1` | 157 | Self-update downloader (includes self) |
-| `scripts/Download-Models.ps1` | - | Model download menu dispatcher |
+| `scripts/Bootstrap-Downloader.ps1` | 166 | Self-update downloader; displays commit hash via GH API |
+| `scripts/Download-Models.ps1` | 85 | Model download menu; -DownloadAll/-v/-vv support |
 | `scripts/dependencies.json` | 105 | URLs, packages, tool configs, file hashes |
 | `scripts/environment.yml` | 18 | Conda env spec (python=3.13.11, cuda-toolkit=13.0.2) |
 | `UmeAiRT-Bootstrap.bat` | 53 | Standalone rescue tool with fork config reading |

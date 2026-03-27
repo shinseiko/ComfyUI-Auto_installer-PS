@@ -9,7 +9,10 @@
 #>
 
 param(
-    [string]$InstallPath = $PSScriptRoot
+    [string]$InstallPath = $PSScriptRoot,
+    [switch]$DownloadAll,
+    [switch]$v,
+    [switch]$vv
 )
 
 # ============================================================================
@@ -17,6 +20,7 @@ param(
 # ============================================================================
 $InstallPath = $InstallPath.Trim('"')
 Import-Module (Join-Path $PSScriptRoot "UmeAiRTUtils.psm1") -Force
+$global:Verbosity = if ($vv) { 2 } elseif ($v) { 1 } else { 0 }
 
 # ============================================================================
 # MAIN EXECUTION
@@ -64,15 +68,20 @@ else {
 Write-Log "-------------------------------------------------------------------------------"
 
 # --- User Prompts ---
-$fluxChoice = Read-UserChoice -Prompt "Do you want to download FLUX base models?" -Choices @("A) fp16", "B) fp8", "C) All", "D) No") -ValidAnswers @("A", "B", "C", "D")
-$ggufChoice = Read-UserChoice -Prompt "Do you want to download FLUX GGUF models?" -Choices @("A) Q8 (18GB VRAM)", "B) Q6 (14GB VRAM)", "C) Q5 (12GB VRAM)", "D) Q4 (10GB VRAM)", "E) Q3 (8GB VRAM)", "F) Q2 (6GB VRAM)", "G) All", "H) No") -ValidAnswers @("A", "B", "C", "D", "E", "F", "G", "H")
-$nunchakuChoice = Read-UserChoice -Prompt "Do you want to download FLUX NUNCHAKU models?" -Choices @("A) Base", "B) Fill", "C) KONTEXT", "D) Krea", "E) All", "F) No") -ValidAnswers @("A", "B", "C", "D", "E", "F")
-$schnellChoice = Read-UserChoice -Prompt "Do you want to download the FLUX SCHNELL model?" -Choices @("A) Yes", "B) No") -ValidAnswers @("A", "B")
-$controlnetChoice = Read-UserChoice -Prompt "Do you want to download FLUX ControlNet models?" -Choices @("A) fp16", "B) fp8", "C) Q8", "D) Q5", "E) Q4", "F) All", "G) No") -ValidAnswers @("A", "B", "C", "D", "E", "F", "G")
-$fillChoice = Read-UserChoice -Prompt "Do you want to download FLUX Fill models?" -Choices @("A) fp16", "B) fp8", "C) Q8", "D) Q6", "E) Q5", "F) Q4", "G) Q3", "H) All", "I) No") -ValidAnswers @("A", "B", "C", "D", "E", "F", "G", "H", "I")
-$pulidChoice = Read-UserChoice -Prompt "Do you want to download FLUX PuLID and REDUX models?" -Choices @("A) Yes", "B) No") -ValidAnswers @("A", "B")
-$upscaleChoice = Read-UserChoice -Prompt "Do you want to download Upscaler models ?" -Choices @("A) Yes", "B) No") -ValidAnswers @("A", "B")
-$loraChoice = Read-UserChoice -Prompt "Do you want to download UmeAiRT LoRAs?" -Choices @("A) Yes", "B) No") -ValidAnswers @("A", "B")
+if ($DownloadAll) {
+    $fluxChoice = 'C'; $ggufChoice = 'G'; $nunchakuChoice = 'E'; $schnellChoice = 'A'
+    $controlnetChoice = 'F'; $fillChoice = 'H'; $pulidChoice = 'A'; $upscaleChoice = 'A'; $loraChoice = 'A'
+} else {
+    $fluxChoice = Read-UserChoice -Prompt "Do you want to download FLUX base models?" -Choices @("A) fp16", "B) fp8", "C) All", "D) No") -ValidAnswers @("A", "B", "C", "D")
+    $ggufChoice = Read-UserChoice -Prompt "Do you want to download FLUX GGUF models?" -Choices @("A) Q8 (18GB VRAM)", "B) Q6 (14GB VRAM)", "C) Q5 (12GB VRAM)", "D) Q4 (10GB VRAM)", "E) Q3 (8GB VRAM)", "F) Q2 (6GB VRAM)", "G) All", "H) No") -ValidAnswers @("A", "B", "C", "D", "E", "F", "G", "H")
+    $nunchakuChoice = Read-UserChoice -Prompt "Do you want to download FLUX NUNCHAKU models?" -Choices @("A) Base", "B) Fill", "C) KONTEXT", "D) Krea", "E) All", "F) No") -ValidAnswers @("A", "B", "C", "D", "E", "F")
+    $schnellChoice = Read-UserChoice -Prompt "Do you want to download the FLUX SCHNELL model?" -Choices @("A) Yes", "B) No") -ValidAnswers @("A", "B")
+    $controlnetChoice = Read-UserChoice -Prompt "Do you want to download FLUX ControlNet models?" -Choices @("A) fp16", "B) fp8", "C) Q8", "D) Q5", "E) Q4", "F) All", "G) No") -ValidAnswers @("A", "B", "C", "D", "E", "F", "G")
+    $fillChoice = Read-UserChoice -Prompt "Do you want to download FLUX Fill models?" -Choices @("A) fp16", "B) fp8", "C) Q8", "D) Q6", "E) Q5", "F) Q4", "G) Q3", "H) All", "I) No") -ValidAnswers @("A", "B", "C", "D", "E", "F", "G", "H", "I")
+    $pulidChoice = Read-UserChoice -Prompt "Do you want to download FLUX PuLID and REDUX models?" -Choices @("A) Yes", "B) No") -ValidAnswers @("A", "B")
+    $upscaleChoice = Read-UserChoice -Prompt "Do you want to download Upscaler models ?" -Choices @("A) Yes", "B) No") -ValidAnswers @("A", "B")
+    $loraChoice = Read-UserChoice -Prompt "Do you want to download UmeAiRT LoRAs?" -Choices @("A) Yes", "B) No") -ValidAnswers @("A", "B")
+}
 
 # --- Download Process ---
 Write-Log "Starting downloads based on your choices..." -Color Cyan
@@ -200,4 +209,4 @@ if ($loraChoice -eq 'A') {
 
 Show-DownloadSummary
 Write-Log "FLUX model downloads complete." -Color Green
-Read-Host "Press Enter to return to the main installer."
+if (-not $DownloadAll) { Read-Host "Press Enter to return to the main installer." }

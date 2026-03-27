@@ -9,7 +9,10 @@
 #>
 
 param(
-    [string]$InstallPath = $PSScriptRoot
+    [string]$InstallPath = $PSScriptRoot,
+    [switch]$DownloadAll,
+    [switch]$v,
+    [switch]$vv
 )
 
 # ============================================================================
@@ -17,6 +20,7 @@ param(
 # ============================================================================
 $InstallPath = $InstallPath.Trim('"')
 Import-Module (Join-Path $PSScriptRoot "UmeAiRTUtils.psm1") -Force
+$global:Verbosity = if ($vv) { 2 } elseif ($v) { 1 } else { 0 }
 
 # ============================================================================
 # MAIN EXECUTION
@@ -47,11 +51,15 @@ else {
 Write-Log "-------------------------------------------------------------------------------"
 
 # --- User Prompts ---
-$baseChoice = Read-UserChoice -Prompt "Do you want to download QWEN base models? " -Choices @("A) bf16", "B) fp8", "C) All", "D) No") -ValidAnswers @("A", "B", "C", "D")
-$ggufChoice = Read-UserChoice -Prompt "Do you want to download QWEN GGUF models?" -Choices @("A) Q8_0", "B) Q5_K_S", "C) Q4_K_S", "D) All", "E) No") -ValidAnswers @("A", "B", "C", "D", "E")
-$editChoice = Read-UserChoice -Prompt "Do you want to download QWEN EDIT models? " -Choices @("A) bf16", "B) fp8", "C) All", "D) No") -ValidAnswers @("A", "B", "C", "D")
-$editggufChoice = Read-UserChoice -Prompt "Do you want to download QWEN EDIT GGUF models?" -Choices @("A) Q8_0", "B) Q5_K_S", "C) Q4_K_S", "D) All", "E) No") -ValidAnswers @("A", "B", "C", "D", "E")
-$lightChoice = Read-UserChoice -Prompt "Do you want to download QWEN Lightning LoRA? " -Choices @("A) 8 Steps", "B) 4 Steps", "C) All", "D) No") -ValidAnswers @("A", "B", "C", "D")
+if ($DownloadAll) {
+    $baseChoice = 'C'; $ggufChoice = 'D'; $editChoice = 'C'; $editggufChoice = 'D'; $lightChoice = 'C'
+} else {
+    $baseChoice = Read-UserChoice -Prompt "Do you want to download QWEN base models? " -Choices @("A) bf16", "B) fp8", "C) All", "D) No") -ValidAnswers @("A", "B", "C", "D")
+    $ggufChoice = Read-UserChoice -Prompt "Do you want to download QWEN GGUF models?" -Choices @("A) Q8_0", "B) Q5_K_S", "C) Q4_K_S", "D) All", "E) No") -ValidAnswers @("A", "B", "C", "D", "E")
+    $editChoice = Read-UserChoice -Prompt "Do you want to download QWEN EDIT models? " -Choices @("A) bf16", "B) fp8", "C) All", "D) No") -ValidAnswers @("A", "B", "C", "D")
+    $editggufChoice = Read-UserChoice -Prompt "Do you want to download QWEN EDIT GGUF models?" -Choices @("A) Q8_0", "B) Q5_K_S", "C) Q4_K_S", "D) All", "E) No") -ValidAnswers @("A", "B", "C", "D", "E")
+    $lightChoice = Read-UserChoice -Prompt "Do you want to download QWEN Lightning LoRA? " -Choices @("A) 8 Steps", "B) 4 Steps", "C) All", "D) No") -ValidAnswers @("A", "B", "C", "D")
+}
 
 # --- Download Process ---
 Write-Log "Starting QWEN model downloads..." -Color Cyan
@@ -147,4 +155,4 @@ if ($lightChoice -ne 'D') {
 
 Show-DownloadSummary
 Write-Log "QWEN model downloads complete." -Color Green
-Read-Host "Press Enter to return to the main installer."
+if (-not $DownloadAll) { Read-Host "Press Enter to return to the main installer." }

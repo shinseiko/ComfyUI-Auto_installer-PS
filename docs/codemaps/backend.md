@@ -1,10 +1,10 @@
-<!-- Generated: 2026-03-25 | Source files: 24 | Token estimate: ~1200 -->
+<!-- Generated: 2026-03-27 | Source files: 26 | Token estimate: ~1400 -->
 
 # Backend Scripts
 
-## Shared Utilities (`scripts/UmeAiRTUtils.psm1`, 587 lines)
+## Shared Utilities (`scripts/UmeAiRTUtils.psm1`, 628 lines)
 
-14 exported functions used across all scripts:
+16 exported functions used across all scripts:
 
 ### Invoke-LogRotation (line 15)
 Rotates log files, keeps N previous runs (default 3).
@@ -49,6 +49,16 @@ Downloads files with aria2c primary, Invoke-WebRequest fallback.
 - aria2c path: `$env:LOCALAPPDATA\aria2\aria2c.exe` with flags `-x 16 -s 16 -k 1M`
 - Fallback: `Invoke-WebRequest` with TLS 1.2/1.3
 - Null guard on `$global:logFile` check before writing aria2c output to log
+- **Partial-file cleanup:** on innermost catch, `Remove-Item $OutFile -Force -ErrorAction SilentlyContinue` before re-throw — prevents re-runs from seeing truncated partial files as "already exists"
+
+### Save-FileCollecting (line ~580)
+Wrapper around `Save-File` that catches errors and accumulates them in `$script:_dlErrors`
+instead of terminating. Allows all downloads to proceed; errors are surfaced at end via `Show-DownloadSummary`.
+
+### Show-DownloadSummary (line ~600)
+Prints a report of all collected download errors from `$script:_dlErrors`.
+If empty, prints "[OK] All downloads succeeded." If non-empty, prints each failed URI and
+a count, so re-runs know exactly what to retry.
 
 ### Read-UserChoice (line 322)
 Interactive menu: displays prompt + choices array, loops until valid answer.
@@ -169,7 +179,7 @@ All pip calls use `uv pip install --python "$pythonExe"` (no pip-only flags).
 
 ---
 
-## Bootstrap Downloader (`scripts/Bootstrap-Downloader.ps1`, 157 lines)
+## Bootstrap Downloader (`scripts/Bootstrap-Downloader.ps1`, 166 lines)
 
 Downloads all scripts + configs from `raw.githubusercontent.com` via `Invoke-WebRequest`.
 Parameters: `$InstallPath`, `$GhUser`, `$GhRepoName`, `$GhBranch`, `-v`/`-vv`.
@@ -178,16 +188,28 @@ File list: 15 PS1 scripts + 6 bat launchers + 4 config files.
 Self-update: includes itself as last entry in download list.
 Clears read-only attributes before overwriting.
 Logs each download to `logs/bootstrap.log` via inline `_AppendLog` helper.
+**Commit hash display:** calls `https://api.github.com/repos/{user}/{repo}/commits/{branch}` before
+downloads; shows short SHA (8 chars) in the status line. Silently skipped on API error.
 
 ---
 
 ## Model Download Scripts (`scripts/Download-*-Models.ps1`)
 
 All follow the same pattern:
-1. Import UmeAiRTUtils, detect GPU via `Get-GpuVramInfo`
-2. Show VRAM-based recommendations
-3. Series of `Read-UserChoice` calls with letter-based menus (A/B/C/D...)
-4. Procedural `Save-File -Uri ... -OutFile ...` calls based on choices
-5. Models hosted on HuggingFace at `https://huggingface.co/UmeAiRT/ComfyUI-Auto-Installer-Assets/resolve/main/models/`
+1. Params: `$InstallPath`, `-DownloadAll` (switch), `-v`/`-vv` (verbosity)
+2. `Import-Module UmeAiRTUtils.psm1`; set `$global:Verbosity`
+3. Detect GPU via `Get-GpuVramInfo`, show VRAM-based recommendations
+4. **If `-DownloadAll`**: set all choice variables to their "All" letter and skip prompts.
+   **Else**: series of `Read-UserChoice` calls with letter-based menus (A/B/C/D...)
+5. Procedural `Save-FileCollecting -Uri ... -OutFile ...` calls based on choices
+6. `Show-DownloadSummary` at end; `Read-Host` pause suppressed when `-DownloadAll`
+7. Models hosted on HuggingFace: `https://huggingface.co/UmeAiRT/ComfyUI-Auto-Installer-Assets/resolve/main/models/`
+   HF naming convention: all safetensors use lowercase-hyphen filenames (e.g. `wan2.1-t2v-14b-bf16.safetensors`)
 
 8 model packs: FLUX, WAN2.1, WAN2.2, HIDREAM, LTX1, LTX2, QWEN, Z-IMAGE.
+
+## Model Download Orchestrator (`scripts/Download-Models.ps1`, 85 lines)
+
+Interactive menu launcher. Params: `$InstallPath`, `-DownloadAll`, `-v`/`-vv`.
+- **Normal mode**: while-loop with numbered menu (1-8, Q to quit); calls chosen script with splatted args
+- **-DownloadAll mode**: iterates all 8 scripts in order, passes `-DownloadAll` + verbosity flags to each; no per-script pauses

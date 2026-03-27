@@ -9,7 +9,10 @@
 #>
 
 param(
-    [string]$InstallPath = $PSScriptRoot
+    [string]$InstallPath = $PSScriptRoot,
+    [switch]$DownloadAll,
+    [switch]$v,
+    [switch]$vv
 )
 
 # ============================================================================
@@ -17,6 +20,7 @@ param(
 # ============================================================================
 $InstallPath = $InstallPath.Trim('"')
 Import-Module (Join-Path $PSScriptRoot "UmeAiRTUtils.psm1") -Force
+$global:Verbosity = if ($vv) { 2 } elseif ($v) { 1 } else { 0 }
 
 # ============================================================================
 # MAIN EXECUTION
@@ -55,8 +59,12 @@ else {
 Write-Log "-------------------------------------------------------------------------------"
 
 # --- User Prompts ---
-$baseChoice = Read-UserChoice -Prompt "Do you want to download HiDream base models?" -Choices @("A) fp8", "B) No") -ValidAnswers @("A", "B")
-$ggufChoice = Read-UserChoice -Prompt "Do you want to download HiDream GGUF models?" -Choices @("A) Q8_0", "B) Q5_K_S", "C) Q4_K_S", "D) All", "E) No") -ValidAnswers @("A", "B", "C", "D", "E")
+if ($DownloadAll) {
+    $baseChoice = 'A'; $ggufChoice = 'D'
+} else {
+    $baseChoice = Read-UserChoice -Prompt "Do you want to download HiDream base models?" -Choices @("A) fp8", "B) No") -ValidAnswers @("A", "B")
+    $ggufChoice = Read-UserChoice -Prompt "Do you want to download HiDream GGUF models?" -Choices @("A) Q8_0", "B) Q5_K_S", "C) Q4_K_S", "D) All", "E) No") -ValidAnswers @("A", "B", "C", "D", "E")
+}
 
 # --- Download Process ---
 Write-Log "Starting HiDream model downloads..." -Color Cyan
@@ -87,4 +95,4 @@ if ($ggufChoice -ne 'E') {
 
 Show-DownloadSummary
 Write-Log "HiDream model downloads complete." -Color Green
-Read-Host "Press Enter to return to the main installer."
+if (-not $DownloadAll) { Read-Host "Press Enter to return to the main installer." }

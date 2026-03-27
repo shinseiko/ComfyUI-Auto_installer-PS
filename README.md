@@ -85,9 +85,19 @@ Three main `.bat` files will be available in your folder to manage the applicati
 
 - **`UmeAiRT-Bootstrap.bat`**
     - **Self-rescue tool.** If your scripts are broken or out of date, run this to re-download all PowerShell scripts fresh from the repository. It does not touch your ComfyUI installation, models, or custom nodes. Use it before opening a bug report — it often fixes issues on its own.
+    - Prints the exact commit hash it is pulling from (e.g., `UmeAiRT/ComfyUI-Auto_installer-PS @ main (a1b2c3d4)`) so you can confirm what version of the scripts you received.
 
 - **`UmeAiRT-Download_models.bat`**
     - Run this script if you want to **add more model packs** later without reinstalling everything. It will present you with the same selection menu as the initial installation.
+    - **Download everything at once:** Pass `-DownloadAll` to skip all interactive prompts and download every model pack in full (useful for testing or building a complete library):
+      ```bat
+      UmeAiRT-Download_models.bat -DownloadAll
+      ```
+    - **Verbosity flags:** Supports `-v` and `-vv` exactly like the install and update scripts. Pass them alone or combined with `-DownloadAll`:
+      ```bat
+      UmeAiRT-Download_models.bat -v
+      UmeAiRT-Download_models.bat -DownloadAll -vv
+      ```
 
 - **`UmeAiRT-Update-ComfyUI.bat`**
     - Execute this script to **update your entire installation**. It will update the code for ComfyUI, all custom nodes, and your workflows, and it will install any new Python dependencies if required.

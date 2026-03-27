@@ -105,8 +105,17 @@ $filesToDownload = @(
     @{ RepoPath = "scripts/Bootstrap-Downloader.ps1";   LocalPath = "scripts/Bootstrap-Downloader.ps1" }
 )
 
-Write-Host "[INFO] Downloading the latest versions of the installation scripts..."
-_AppendLog $_bootstrapLog "=== Bootstrap started: $GhUser/$GhRepoName @ $GhBranch ==="
+# Resolve the current commit hash for the branch via GitHub API (best-effort)
+$commitHash = ""
+try {
+    $apiUrl = "https://api.github.com/repos/$GhUser/$GhRepoName/commits/$GhBranch"
+    $commitInfo = Invoke-RestMethod -Uri $apiUrl -UseBasicParsing -Headers @{ 'User-Agent' = 'UmeAiRT-Installer' } -ErrorAction Stop
+    $commitHash = $commitInfo.sha.Substring(0, 8)
+} catch {}
+
+$sourceLabel = if ($commitHash) { "$GhUser/$GhRepoName @ $GhBranch ($commitHash)" } else { "$GhUser/$GhRepoName @ $GhBranch" }
+Write-Host "[INFO] Downloading the latest versions of the installation scripts from $sourceLabel ..."
+_AppendLog $_bootstrapLog "=== Bootstrap started: $sourceLabel ==="
 
 # Set TLS protocol for compatibility
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12, [Net.SecurityProtocolType]::Tls13

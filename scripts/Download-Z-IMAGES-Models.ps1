@@ -10,7 +10,10 @@
 #>
 
 param(
-    [string]$InstallPath = $PSScriptRoot
+    [string]$InstallPath = $PSScriptRoot,
+    [switch]$DownloadAll,
+    [switch]$v,
+    [switch]$vv
 )
 
 # ============================================================================
@@ -18,6 +21,7 @@ param(
 # ============================================================================
 $InstallPath = $InstallPath.Trim('"')
 Import-Module (Join-Path $PSScriptRoot "UmeAiRTUtils.psm1") -Force
+$global:Verbosity = if ($vv) { 2 } elseif ($v) { 1 } else { 0 }
 
 # ============================================================================
 # MAIN EXECUTION
@@ -72,9 +76,13 @@ else {
 Write-Log "-------------------------------------------------------------------------------"
 
 # --- User Prompts ---
-$baseChoice = Read-UserChoice -Prompt "Do you want to download Z-IMAGE Turbo BF16 (Base Model)? " -Choices @("A) Yes (Best Quality)", "B) No") -ValidAnswers @("A", "B")
-$ggufChoice = Read-UserChoice -Prompt "Do you want to download Z-IMAGE Turbo GGUF models (Optimized)?" -Choices @("A) Q8_0 (High Quality)", "B) Q6_K", "C) Q5_K_S (Balanced)", "D) Q4_K_S (Fast)", "E) Q3_K_S (Low VRAM)", "F) All", "G) No") -ValidAnswers @("A", "B", "C", "D", "E", "F", "G")
-$upscalerChoice = Read-UserChoice -Prompt "Do you want to download RealESRGAN Upscalers? " -Choices @("A) Yes", "B) No") -ValidAnswers @("A", "B")
+if ($DownloadAll) {
+    $baseChoice = 'A'; $ggufChoice = 'F'; $upscalerChoice = 'A'
+} else {
+    $baseChoice = Read-UserChoice -Prompt "Do you want to download Z-IMAGE Turbo BF16 (Base Model)? " -Choices @("A) Yes (Best Quality)", "B) No") -ValidAnswers @("A", "B")
+    $ggufChoice = Read-UserChoice -Prompt "Do you want to download Z-IMAGE Turbo GGUF models (Optimized)?" -Choices @("A) Q8_0 (High Quality)", "B) Q6_K", "C) Q5_K_S (Balanced)", "D) Q4_K_S (Fast)", "E) Q3_K_S (Low VRAM)", "F) All", "G) No") -ValidAnswers @("A", "B", "C", "D", "E", "F", "G")
+    $upscalerChoice = Read-UserChoice -Prompt "Do you want to download RealESRGAN Upscalers? " -Choices @("A) Yes", "B) No") -ValidAnswers @("A", "B")
+}
 
 # --- Download Process ---
 Write-Log "Starting Z-IMAGE Turbo model downloads..." -Color Cyan
@@ -154,4 +162,4 @@ if ($upscalerChoice -eq 'A') {
 
 Show-DownloadSummary
 Write-Log "Z-IMAGE Turbo model downloads complete." -Color Green
-Read-Host "Press Enter to return to the main installer."
+if (-not $DownloadAll) { Read-Host "Press Enter to return to the main installer." }
