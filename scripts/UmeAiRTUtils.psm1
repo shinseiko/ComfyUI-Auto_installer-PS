@@ -624,4 +624,4 @@ function Resolve-CleanPath {
 }
 
 # --- END OF FILE ---
-Export-ModuleMember -Function Invoke-LogRotation, Write-Log, Invoke-AndLog, Save-File, Confirm-FileHash, Confirm-Authenticode, Set-ManagerUseUv, Test-NvidiaGpu, Read-UserChoice, Get-GpuVramInfo, Test-PyVersion, Read-UserConfig, ConvertTo-ForwardSlash, Resolve-CleanPath
+Export-ModuleMember -Function Invoke-LogRotation, Write-Log, Invoke-AndLog, Save-File, Confirm-FileHash, Confirm-Authenticode, Set-ManagerUseUv, Test-NvidiaGpu, Read-UserChoice, Get-GpuVramInfo, Test-PyVersion, Read-UserConfig, ConvertTo-ForwardSlash, Resolve-CleanPath, Save-FileCollecting, Show-DownloadSummary
