@@ -70,25 +70,26 @@ New-Item -Path $hidreamDiffDir, $hidreamUnetDir -ItemType Directory -Force | Out
 if ($baseChoice -ne 'D') {
     Write-Log "Downloading HiDream base models..."
     if ($baseChoice -in 'A', 'C') {
-        Save-File -Uri "$baseUrl/diffusion_models/HiDream/hidream_i1_dev_fp16.safetensors" -OutFile (Join-Path $hidreamDiffDir "hidream_i1_dev_fp16.safetensors")
+        Save-FileCollecting -Uri "$baseUrl/diffusion_models/HiDream/hidream_i1_dev_fp16.safetensors" -OutFile (Join-Path $hidreamDiffDir "hidream_i1_dev_fp16.safetensors")
     }
     if ($baseChoice -in 'B', 'C') {
-        Save-File -Uri "$baseUrl/diffusion_models/HiDream/hidream_i1_dev_fp8.safetensors" -OutFile (Join-Path $hidreamDiffDir "hidream_i1_dev_fp8.safetensors")
+        Save-FileCollecting -Uri "$baseUrl/diffusion_models/HiDream/hidream_i1_dev_fp8.safetensors" -OutFile (Join-Path $hidreamDiffDir "hidream_i1_dev_fp8.safetensors")
     }
 }
 
 if ($ggufChoice -ne 'E') {
     Write-Log "Downloading HiDream GGUF models..."
     if ($ggufChoice -in 'A', 'D') {
-        Save-File -Uri "$baseUrl/diffusion_models/HiDream/HiDream-I1-Dev-Q8_0.gguf" -OutFile (Join-Path $hidreamUnetDir "hidream-i1-dev-Q8_0.gguf")
+        Save-FileCollecting -Uri "$baseUrl/diffusion_models/HiDream/HiDream-I1-Dev-Q8_0.gguf" -OutFile (Join-Path $hidreamUnetDir "hidream-i1-dev-Q8_0.gguf")
     }
     if ($ggufChoice -in 'B', 'D') {
-        Save-File -Uri "$baseUrl/diffusion_models/HiDream/HiDream-I1-Dev-Q5_K_S.gguf" -OutFile (Join-Path $hidreamUnetDir "hidream-i1-dev-Q5_K_S.gguf")
+        Save-FileCollecting -Uri "$baseUrl/diffusion_models/HiDream/HiDream-I1-Dev-Q5_K_S.gguf" -OutFile (Join-Path $hidreamUnetDir "hidream-i1-dev-Q5_K_S.gguf")
     }
     if ($ggufChoice -in 'C', 'D') {
-        Save-File -Uri "$baseUrl/diffusion_models/HiDream/HiDream-I1-Dev-Q4_K_S.gguf" -OutFile (Join-Path $hidreamUnetDir "hidream-i1-dev-Q4_K_S.gguf")
+        Save-FileCollecting -Uri "$baseUrl/diffusion_models/HiDream/HiDream-I1-Dev-Q4_K_S.gguf" -OutFile (Join-Path $hidreamUnetDir "hidream-i1-dev-Q4_K_S.gguf")
     }
 }
 
+Show-DownloadSummary
 Write-Log "HiDream model downloads complete." -Color Green
 Read-Host "Press Enter to return to the main installer."

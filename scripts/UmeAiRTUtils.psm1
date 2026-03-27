@@ -342,6 +342,46 @@ function Save-File {
     }
 }
 
+# Module-level list for download error collection (reset on each -Force module reload).
+$script:_dlErrors = [System.Collections.Generic.List[string]]::new()
+
+function Save-FileCollecting {
+    <#
+    .SYNOPSIS
+        Calls Save-File but catches failures instead of throwing.
+        Failed filenames are accumulated in $script:_dlErrors.
+        Call Show-DownloadSummary at the end of a download phase to report them.
+    #>
+    param(
+        [string]$Uri,
+        [string]$OutFile,
+        [string]$ExpectedHash = ""
+    )
+    try {
+        Save-File -Uri $Uri -OutFile $OutFile -ExpectedHash $ExpectedHash
+    }
+    catch {
+        $fname = Split-Path $OutFile -Leaf
+        $script:_dlErrors.Add($fname)
+        Write-Log "WARNING: '$fname' failed to download — continuing." -Color Yellow
+    }
+}
+
+function Show-DownloadSummary {
+    <#
+    .SYNOPSIS
+        Prints a summary of any download failures collected by Save-FileCollecting.
+    #>
+    if ($script:_dlErrors.Count -gt 0) {
+        Write-Log ""
+        Write-Log "  $($script:_dlErrors.Count) download(s) FAILED:" -Color Red
+        foreach ($f in $script:_dlErrors) {
+            Write-Log "    - $f" -Color Red
+        }
+        Write-Log "  Re-run this script to retry the failed files." -Color Yellow
+    }
+}
+
 function Read-UserChoice {
     <#
     .SYNOPSIS

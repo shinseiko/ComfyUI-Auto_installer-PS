@@ -95,14 +95,14 @@ $doDownload = ($baseChoice -eq 'A' -or $ggufChoice -ne 'G')
 
 if ($doDownload) {
     Write-Log "Downloading common support files (VAE)..."
-    Save-File -Uri "$baseUrl/vae/ae.safetensors" -OutFile (Join-Path $vaeDir "ae.safetensors")
+    Save-FileCollecting -Uri "$baseUrl/vae/ae.safetensors" -OutFile (Join-Path $vaeDir "ae.safetensors")
 }
 
 # --- Download BF16 Base Model ---
 if ($baseChoice -eq 'A') {
     Write-Log "Downloading Z-IMAGE Turbo BF16 Base Model..."
-    Save-File -Uri "$baseUrl/diffusion_models/Z-IMG/z_image_turbo_bf16.safetensors" -OutFile (Join-Path $ZImgDiffDir "z_image_turbo_bf16.safetensors")
-    Save-File -Uri "$baseUrl/text_encoders/QWEN/qwen3-4b.safetensors" -OutFile (Join-Path $clipDir "qwen3-4b.safetensors")
+    Save-FileCollecting -Uri "$baseUrl/diffusion_models/Z-IMG/z_image_turbo_bf16.safetensors" -OutFile (Join-Path $ZImgDiffDir "z_image_turbo_bf16.safetensors")
+    Save-FileCollecting -Uri "$baseUrl/text_encoders/QWEN/qwen3-4b.safetensors" -OutFile (Join-Path $clipDir "qwen3-4b.safetensors")
 }
 
 # --- Download GGUF Models ---
@@ -112,45 +112,46 @@ if ($ggufChoice -ne 'G') {
     # Option A: Q8 (High Quality) -> CLIP Q8
     if ($ggufChoice -in 'A', 'F') {
         Write-Log "Downloading Q8_0 Set (UNet + CLIP)..."
-        Save-File -Uri "$baseUrl/diffusion_models/Z-IMG/Z-Image-Turbo-Q8_0.gguf" -OutFile (Join-Path $ZImgUnetDir "Z-Image-Turbo-Q8_0.gguf")
-        Save-File -Uri "$baseUrl/text_encoders/QWEN/Qwen3-4B-UD-Q8_K_XL.gguf" -OutFile (Join-Path $clipDir "Qwen3-4B-UD-Q8_K_XL.gguf")
+        Save-FileCollecting -Uri "$baseUrl/diffusion_models/Z-IMG/Z-Image-Turbo-Q8_0.gguf" -OutFile (Join-Path $ZImgUnetDir "Z-Image-Turbo-Q8_0.gguf")
+        Save-FileCollecting -Uri "$baseUrl/text_encoders/QWEN/Qwen3-4B-UD-Q8_K_XL.gguf" -OutFile (Join-Path $clipDir "Qwen3-4B-UD-Q8_K_XL.gguf")
     }
 
     # Option B: Q6 (Good Quality) -> CLIP Q6
     if ($ggufChoice -in 'B', 'F') {
         Write-Log "Downloading Q6_K Set (UNet + CLIP)..."
-        Save-File -Uri "$baseUrl/diffusion_models/Z-IMG/Z-Image-Turbo-Q6_K.gguf" -OutFile (Join-Path $ZImgUnetDir "Z-Image-Turbo-Q6_K.gguf")
-        Save-File -Uri "$baseUrl/text_encoders/QWEN/Qwen3-4B-UD-Q6_K_XL.gguf" -OutFile (Join-Path $clipDir "Qwen3-4B-UD-Q6_K_XL.gguf")
+        Save-FileCollecting -Uri "$baseUrl/diffusion_models/Z-IMG/Z-Image-Turbo-Q6_K.gguf" -OutFile (Join-Path $ZImgUnetDir "Z-Image-Turbo-Q6_K.gguf")
+        Save-FileCollecting -Uri "$baseUrl/text_encoders/QWEN/Qwen3-4B-UD-Q6_K_XL.gguf" -OutFile (Join-Path $clipDir "Qwen3-4B-UD-Q6_K_XL.gguf")
     }
 
     # Option C: Q5 (Balanced) -> CLIP Q5
     if ($ggufChoice -in 'C', 'F') {
         Write-Log "Downloading Q5_K Set (UNet + CLIP)..."
-        Save-File -Uri "$baseUrl/diffusion_models/Z-IMG/Z-Image-Turbo-Q5_K_S.gguf" -OutFile (Join-Path $ZImgUnetDir "Z-Image-Turbo-Q5_K_S.gguf")
-        Save-File -Uri "$baseUrl/text_encoders/QWEN/Qwen3-4B-UD-Q5_K_XL.gguf" -OutFile (Join-Path $clipDir "Qwen3-4B-UD-Q5_K_XL.gguf")
+        Save-FileCollecting -Uri "$baseUrl/diffusion_models/Z-IMG/Z-Image-Turbo-Q5_K_S.gguf" -OutFile (Join-Path $ZImgUnetDir "Z-Image-Turbo-Q5_K_S.gguf")
+        Save-FileCollecting -Uri "$baseUrl/text_encoders/QWEN/Qwen3-4B-UD-Q5_K_XL.gguf" -OutFile (Join-Path $clipDir "Qwen3-4B-UD-Q5_K_XL.gguf")
     }
 
     # Option D: Q4 (Fast) -> CLIP Q4
     if ($ggufChoice -in 'D', 'F') {
         Write-Log "Downloading Q4_K Set (UNet + CLIP)..."
-        Save-File -Uri "$baseUrl/diffusion_models/Z-IMG/Z-Image-Turbo-Q4_K_S.gguf" -OutFile (Join-Path $ZImgUnetDir "Z-Image-Turbo-Q4_K_S.gguf")
-        Save-File -Uri "$baseUrl/text_encoders/QWEN/Qwen3-4B-UD-Q4_K_XL.gguf" -OutFile (Join-Path $clipDir "Qwen3-4B-UD-Q4_K_XL.gguf")
+        Save-FileCollecting -Uri "$baseUrl/diffusion_models/Z-IMG/Z-Image-Turbo-Q4_K_S.gguf" -OutFile (Join-Path $ZImgUnetDir "Z-Image-Turbo-Q4_K_S.gguf")
+        Save-FileCollecting -Uri "$baseUrl/text_encoders/QWEN/Qwen3-4B-UD-Q4_K_XL.gguf" -OutFile (Join-Path $clipDir "Qwen3-4B-UD-Q4_K_XL.gguf")
     }
 
     # Option E: Q3 (Low VRAM) -> CLIP Q3
     if ($ggufChoice -in 'E', 'F') {
         Write-Log "Downloading Q3_K Set (UNet + CLIP)..."
-        Save-File -Uri "$baseUrl/diffusion_models/Z-IMG/Z-Image-Turbo-Q3_K_S.gguf" -OutFile (Join-Path $ZImgUnetDir "Z-Image-Turbo-Q3_K_S.gguf")
-        Save-File -Uri "$baseUrl/text_encoders/QWEN/Qwen3-4B-UD-Q3_K_XL.gguf" -OutFile (Join-Path $clipDir "Qwen3-4B-UD-Q3_K_XL.gguf")
+        Save-FileCollecting -Uri "$baseUrl/diffusion_models/Z-IMG/Z-Image-Turbo-Q3_K_S.gguf" -OutFile (Join-Path $ZImgUnetDir "Z-Image-Turbo-Q3_K_S.gguf")
+        Save-FileCollecting -Uri "$baseUrl/text_encoders/QWEN/Qwen3-4B-UD-Q3_K_XL.gguf" -OutFile (Join-Path $clipDir "Qwen3-4B-UD-Q3_K_XL.gguf")
     }
 }
 
 # --- Download Upscalers ---
 if ($upscalerChoice -eq 'A') {
     Write-Log "Downloading RealESRGAN Upscalers..."
-    Save-File -Uri "$esrganUrl/RealESRGAN_x4plus.pth" -OutFile (Join-Path $upscaleDir "RealESRGAN_x4plus.pth")
-    Save-File -Uri "$esrganUrl/RealESRGAN_x4plus_anime_6B.pth" -OutFile (Join-Path $upscaleDir "RealESRGAN_x4plus_anime_6B.pth")
+    Save-FileCollecting -Uri "$esrganUrl/RealESRGAN_x4plus.pth" -OutFile (Join-Path $upscaleDir "RealESRGAN_x4plus.pth")
+    Save-FileCollecting -Uri "$esrganUrl/RealESRGAN_x4plus_anime_6B.pth" -OutFile (Join-Path $upscaleDir "RealESRGAN_x4plus_anime_6B.pth")
 }
 
+Show-DownloadSummary
 Write-Log "Z-IMAGE Turbo model downloads complete." -Color Green
 Read-Host "Press Enter to return to the main installer."
