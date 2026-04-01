@@ -1,0 +1,548 @@
+# Instincts generated from https://github.com/shinseiko/ComfyUI-Auto_installer-PS
+# Generated: 2026-04-01T07:20:19.788Z
+# Version: 2.0
+# NOTE: This file supplements (does not replace) any existing curated instincts.
+# High-confidence manually curated instincts should be preserved alongside these.
+
+---
+id: ComfyUI-Auto_installer-PS-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# ComfyUI Auto_installer PS Commit Length
+
+## Action
+
+Keep commit messages concise (~41 characters)
+
+## Evidence
+
+- Average commit message length: 41 chars
+- Based on 200 commits
+
+---
+id: ComfyUI-Auto_installer-PS-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# ComfyUI Auto_installer PS Naming Files
+
+## Action
+
+Use kebab-case naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: kebab-case
+
+---
+id: ComfyUI-Auto_installer-PS-import-relative
+trigger: "when importing modules"
+confidence: 0.75
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# ComfyUI Auto_installer PS Import Relative
+
+## Action
+
+Use relative imports for project files
+
+## Evidence
+
+- Import analysis shows relative import pattern
+- Example: import { x } from '../lib/x'
+
+---
+id: ComfyUI-Auto_installer-PS-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# ComfyUI Auto_installer PS Export Style
+
+## Action
+
+Prefer named exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: named
+
+---
+id: ComfyUI-Auto_installer-PS-test-separate
+trigger: "when writing tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# ComfyUI Auto_installer PS Test Separate
+
+## Action
+
+Place tests in the tests/ or __tests__/ directory, mirroring src structure
+
+## Evidence
+
+- Separate test directory pattern detected
+- Tests live in dedicated test folders
+
+---
+id: ComfyUI-Auto_installer-PS-workflow-feature-development
+trigger: "when implementing a new feature"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# ComfyUI Auto_installer PS Workflow Feature Development
+
+## Action
+
+Follow the feature-development workflow:
+1. Add feature implementation
+2. Add tests for feature
+3. Update documentation
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~10x per month
+- Files: 
+
+---
+id: ComfyUI-Auto_installer-PS-workflow-model-download-script-update
+trigger: "when doing model download script update"
+confidence: 0.65
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# ComfyUI Auto_installer PS Workflow Model Download Script Update
+
+## Action
+
+Follow the model-download-script-update workflow:
+1. Edit one or more scripts/Download-*.ps1 files to update URLs, paths, or logic.
+2. Optionally update scripts/UmeAiRTUtils.psm1 if shared download logic changes.
+3. Optionally update README.md or docs/codemaps/backend.md to document changes.
+4. Commit all affected download scripts together.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~3x per month
+- Files: scripts/Download-FLUX-Models.ps1, scripts/Download-HIDREAM-Models.ps1, scripts/Download-LTX1-Models.ps1
+
+---
+id: ComfyUI-Auto_installer-PS-workflow-add-or-propagate-verbosity-flags
+trigger: "when doing add or propagate verbosity flags"
+confidence: 0.55
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# ComfyUI Auto_installer PS Workflow Add Or Propagate Verbosity Flags
+
+## Action
+
+Follow the add-or-propagate-verbosity-flags workflow:
+1. Add or update -v/-vv flags in scripts (Install, Update, Bootstrap, Download scripts).
+2. Update shared utility module (scripts/UmeAiRTUtils.psm1) to support new verbosity levels.
+3. Propagate flags through script call chains (e.g., Phase1 → Phase2).
+4. Update README.md to document new flags.
+5. Optionally update docs/codemaps/backend.md or architecture.md.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~1x per month
+- Files: scripts/Install-ComfyUI.ps1, scripts/Install-ComfyUI-Phase1.ps1, scripts/Install-ComfyUI-Phase2.ps1
+
+---
+id: ComfyUI-Auto_installer-PS-workflow-documentation-codemaps-and-readme-update
+trigger: "when doing documentation codemaps and readme update"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# ComfyUI Auto_installer PS Workflow Documentation Codemaps And Readme Update
+
+## Action
+
+Follow the documentation-codemaps-and-readme-update workflow:
+1. Edit README.md to document new flags, features, or migration steps.
+2. Update docs/codemaps/*.md files to reflect backend, architecture, data, or frontend changes.
+3. Optionally update docs/adr/* for architectural decisions.
+4. Commit documentation changes, often alongside or after code changes.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: README.md, docs/codemaps/architecture.md, docs/codemaps/backend.md
+
+---
+id: ComfyUI-Auto_installer-PS-workflow-dependency-or-installer-script-update
+trigger: "when doing dependency or installer script update"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# ComfyUI Auto_installer PS Workflow Dependency Or Installer Script Update
+
+## Action
+
+Follow the dependency-or-installer-script-update workflow:
+1. Edit scripts/dependencies.json to update URLs, SHAs, or version pins.
+2. Optionally update installer scripts (Install-ComfyUI-Phase1.ps1, Phase2.ps1, Update-ComfyUI.ps1) to use new dependencies or logic.
+3. Optionally update docs/adr/* to document rationale.
+4. Commit all relevant files together.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: scripts/dependencies.json, scripts/Install-ComfyUI-Phase1.ps1, scripts/Install-ComfyUI-Phase2.ps1
+
+---
+id: ComfyUI-Auto_installer-PS-workflow-ci-pipeline-or-linting-update
+trigger: "when doing ci pipeline or linting update"
+confidence: 0.55
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# ComfyUI Auto_installer PS Workflow Ci Pipeline Or Linting Update
+
+## Action
+
+Follow the ci-pipeline-or-linting-update workflow:
+1. Edit .github/workflows/ci.yml to add or update jobs.
+2. Optionally add or update PSScriptAnalyzerSettings.psd1.
+3. Optionally update .gitignore for CI artifacts.
+4. Commit CI and config changes.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~1x per month
+- Files: .github/workflows/ci.yml, PSScriptAnalyzerSettings.psd1, .gitignore
+
+---
+id: comfyui-auto_installer-ps-coding-naming-files
+trigger: "When creating or renaming files"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Coding Naming Files
+
+## Action
+
+Use kebab-case for file names
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.files
+- All scripts and config files use kebab-case
+
+---
+id: comfyui-auto_installer-ps-coding-naming-functions
+trigger: "When defining functions"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Coding Naming Functions
+
+## Action
+
+Use camelCase for function names
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.functions
+
+---
+id: comfyui-auto_installer-ps-coding-naming-classes
+trigger: "When defining classes"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Coding Naming Classes
+
+## Action
+
+Use PascalCase for class names
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.classes
+
+---
+id: comfyui-auto_installer-ps-coding-naming-constants
+trigger: "When defining constants"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Coding Naming Constants
+
+## Action
+
+Use SCREAMING_SNAKE_CASE for constants
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.constants
+
+---
+id: comfyui-auto_installer-ps-coding-imports
+trigger: "When importing modules"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Coding Imports
+
+## Action
+
+Use relative import paths
+
+## Evidence
+
+- Pattern in codeStyle.importStyle
+
+---
+id: comfyui-auto_installer-ps-coding-exports
+trigger: "When exporting modules or functions"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Coding Exports
+
+## Action
+
+Use named exports
+
+## Evidence
+
+- Pattern in codeStyle.exportStyle
+
+---
+id: comfyui-auto_installer-ps-testing-pattern
+trigger: "When adding a new feature"
+confidence: 0.7
+domain: testing
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Testing Pattern
+
+## Action
+
+Add tests for the feature after implementation and before documentation update
+
+## Evidence
+
+- feature-development workflow: 'Add tests for feature' step follows implementation
+
+---
+id: comfyui-auto_installer-ps-git-commit-prefix
+trigger: "When writing a commit message"
+confidence: 0.9
+domain: git
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Git Commit Prefix
+
+## Action
+
+Prefix the commit message with a type (fix, feat, docs, chore, ci) followed by a colon
+
+## Evidence
+
+- Seen in commit: 'fix: replace ?? null-coalescing with PS 5.1-compatible if/else'
+- Pattern in commits.prefixes
+
+---
+id: comfyui-auto_installer-ps-git-commit-length
+trigger: "When writing a commit message"
+confidence: 0.7
+domain: git
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Git Commit Length
+
+## Action
+
+Keep the commit message concise (average ~41 characters)
+
+## Evidence
+
+- Pattern in commits.averageLength
+
+---
+id: comfyui-auto_installer-ps-git-commit-scope
+trigger: "When writing a commit message for a specific file or function"
+confidence: 0.8
+domain: git
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Git Commit Scope
+
+## Action
+
+Include the affected file or function in parentheses after the prefix
+
+## Evidence
+
+- Seen in commit: 'fix: replace ?? null-coalescing with PS 5.1-compatible if/else (Install-ComfyUI.ps1:115)'
+
+---
+id: comfyui-auto_installer-ps-workflow-model-download-update
+trigger: "When model assets change, new models are added, or download logic needs improvement"
+confidence: 0.98
+domain: workflow
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Workflow Model Download Update
+
+## Action
+
+Edit scripts/Download-*.ps1 and optionally scripts/UmeAiRTUtils.psm1, then commit all affected scripts together
+
+## Evidence
+
+- model-download-script-update workflow description and steps
+- Commits editing multiple Download-*.ps1 files together
+
+---
+id: comfyui-auto_installer-ps-workflow-verbosity-flags
+trigger: "When improving user feedback or debugging capabilities across installer scripts"
+confidence: 0.95
+domain: workflow
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Workflow Verbosity Flags
+
+## Action
+
+Add or update -v/-vv flags in scripts and propagate through utility modules and documentation
+
+## Evidence
+
+- add-or-propagate-verbosity-flags workflow description and steps
+- Commits updating scripts and README.md for verbosity
+
+---
+id: comfyui-auto_installer-ps-workflow-docs-update
+trigger: "When features, flags, or architecture change and documentation needs to be kept in sync"
+confidence: 0.92
+domain: workflow
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Workflow Docs Update
+
+## Action
+
+Edit README.md and docs/codemaps/*.md to reflect changes, optionally update docs/adr/*
+
+## Evidence
+
+- documentation-codemaps-and-readme-update workflow description and steps
+- Commits updating README.md and codemaps after code changes
+
+---
+id: comfyui-auto_installer-ps-workflow-dependency-update
+trigger: "When dependencies change, new installer logic is needed, or URLs are updated"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Workflow Dependency Update
+
+## Action
+
+Edit scripts/dependencies.json and optionally installer scripts and docs/adr/*, then commit all relevant files together
+
+## Evidence
+
+- dependency-or-installer-script-update workflow description and steps
+- Commits updating dependencies.json and installer scripts together
+
+---
+id: comfyui-auto_installer-ps-workflow-ci-update
+trigger: "When improving CI reliability or adapting to new code/linting requirements"
+confidence: 0.85
+domain: workflow
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Workflow Ci Update
+
+## Action
+
+Edit .github/workflows/ci.yml, optionally update PSScriptAnalyzerSettings.psd1 and .gitignore, then commit CI and config changes
+
+## Evidence
+
+- ci-pipeline-or-linting-update workflow description and steps
+- Commits updating ci.yml and PSScriptAnalyzerSettings.psd1
+
