@@ -1,0 +1,392 @@
+# Instincts generated from https://github.com/shinseiko/ComfyUI-Auto_installer-PS
+# Generated: 2026-04-05T07:06:49.213Z
+# Version: 2.0
+# NOTE: This file supplements (does not replace) any existing curated instincts.
+# High-confidence manually curated instincts should be preserved alongside these.
+
+---
+id: ComfyUI-Auto_installer-PS-commit-conventional
+trigger: "when writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: https://github.com/shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# ComfyUI Auto_installer PS Commit Conventional
+
+## Action
+
+Use conventional commit format with prefixes: feat
+
+## Evidence
+
+- 15 commits analyzed
+- Detected conventional commit pattern
+- Examples: feat: add ComfyUI-Auto_installer-PS ECC bundle (.claude/ecc-tools.json), feat: add ComfyUI-Auto_installer-PS ECC bundle (.claude/skills/ComfyUI-Auto_installer-PS/SKILL.md)
+
+---
+id: ComfyUI-Auto_installer-PS-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# ComfyUI Auto_installer PS Commit Length
+
+## Action
+
+Write moderate-length commit messages (~87 characters)
+
+## Evidence
+
+- Average commit message length: 87 chars
+- Based on 15 commits
+
+---
+id: ComfyUI-Auto_installer-PS-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# ComfyUI Auto_installer PS Naming Files
+
+## Action
+
+Use camelCase naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: camelCase
+
+---
+id: ComfyUI-Auto_installer-PS-import-relative
+trigger: "when importing modules"
+confidence: 0.75
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# ComfyUI Auto_installer PS Import Relative
+
+## Action
+
+Use relative imports for project files
+
+## Evidence
+
+- Import analysis shows relative import pattern
+- Example: import { x } from '../lib/x'
+
+---
+id: ComfyUI-Auto_installer-PS-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# ComfyUI Auto_installer PS Export Style
+
+## Action
+
+Prefer named exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: named
+
+---
+id: ComfyUI-Auto_installer-PS-test-separate
+trigger: "when writing tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# ComfyUI Auto_installer PS Test Separate
+
+## Action
+
+Place tests in the tests/ or __tests__/ directory, mirroring src structure
+
+## Evidence
+
+- Separate test directory pattern detected
+- Tests live in dedicated test folders
+
+---
+id: ComfyUI-Auto_installer-PS-workflow-feature-development
+trigger: "when implementing a new feature"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# ComfyUI Auto_installer PS Workflow Feature Development
+
+## Action
+
+Follow the feature-development workflow:
+1. Add feature implementation
+2. Add tests for feature
+3. Update documentation
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~28x per month
+- Files: 
+
+---
+id: ComfyUI-Auto_installer-PS-workflow-add-ecc-bundle-component
+trigger: "when doing add ecc bundle component"
+confidence: 0.55
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# ComfyUI Auto_installer PS Workflow Add Ecc Bundle Component
+
+## Action
+
+Follow the add-ecc-bundle-component workflow:
+1. Create or update .claude/ecc-tools.json to register the tool
+2. Add SKILL.md in .claude/skills/<SkillName>/ and/or .agents/skills/<SkillName>/
+3. Add agent configuration (e.g., openai.yaml) in .agents/skills/<SkillName>/agents/
+4. Add or update .claude/identity.json
+5. Create or update .codex/config.toml and .codex/AGENTS.md
+6. Add agent TOML files in .codex/agents/
+7. Add instincts YAML in .claude/homunculus/instincts/inherited/
+8. Add or update command documentation in .claude/commands/
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~1x per month
+- Files: .claude/ecc-tools.json, .claude/skills/*/SKILL.md, .agents/skills/*/SKILL.md
+
+---
+id: comfyui-auto_installer-ps-instinct-file-naming
+trigger: "When creating a new file in the repository"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Instinct File Naming
+
+## Action
+
+Name the file using camelCase convention
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.files
+
+---
+id: comfyui-auto_installer-ps-instinct-function-naming
+trigger: "When defining a new function"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Instinct Function Naming
+
+## Action
+
+Use camelCase for function names
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.functions
+
+---
+id: comfyui-auto_installer-ps-instinct-class-naming
+trigger: "When defining a new class"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Instinct Class Naming
+
+## Action
+
+Use PascalCase for class names
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.classes
+
+---
+id: comfyui-auto_installer-ps-instinct-constant-naming
+trigger: "When declaring a constant"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Instinct Constant Naming
+
+## Action
+
+Use SCREAMING_SNAKE_CASE for constant names
+
+## Evidence
+
+- Pattern in codeStyle.namingConventions.constants
+
+---
+id: comfyui-auto_installer-ps-instinct-import-style
+trigger: "When importing modules in TypeScript files"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Instinct Import Style
+
+## Action
+
+Use relative import paths
+
+## Evidence
+
+- Pattern in codeStyle.importStyle
+
+---
+id: comfyui-auto_installer-ps-instinct-export-style
+trigger: "When exporting modules or functions"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Instinct Export Style
+
+## Action
+
+Use named exports
+
+## Evidence
+
+- Pattern in codeStyle.exportStyle
+
+---
+id: comfyui-auto_installer-ps-instinct-git-commit-format
+trigger: "When writing a git commit message"
+confidence: 0.9
+domain: git
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Instinct Git Commit Format
+
+## Action
+
+Use the conventional commit format with the 'feat' prefix for new features
+
+## Evidence
+
+- Seen in commit: feat: add ComfyUI-Auto_installer-PS ECC bundle (.claude/ecc-tools.json)
+- Pattern in commits.prefixes
+
+---
+id: comfyui-auto_installer-ps-instinct-git-commit-length
+trigger: "When writing a git commit message"
+confidence: 0.7
+domain: git
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Instinct Git Commit Length
+
+## Action
+
+Keep the commit message concise, around 87 characters on average
+
+## Evidence
+
+- Pattern in commits.averageLength
+
+---
+id: comfyui-auto_installer-ps-instinct-feature-dev-workflow
+trigger: "When implementing a new feature"
+confidence: 0.8
+domain: workflow
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Instinct Feature Dev Workflow
+
+## Action
+
+Follow the sequence: add feature implementation, add tests for feature, update documentation
+
+## Evidence
+
+- Workflow: feature-development
+- Example commit sequence in workflows[0].commitSequence
+
+---
+id: comfyui-auto_installer-ps-instinct-add-ecc-bundle-component
+trigger: "When registering a new skill or agent as an ECC bundle"
+confidence: 0.95
+domain: workflow
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Instinct Add Ecc Bundle Component
+
+## Action
+
+Create or update .claude/ecc-tools.json, add SKILL.md, add agent config, update identity and codex files, add instincts YAML, and update command docs as per the add-ecc-bundle-component workflow
+
+## Evidence
+
+- Workflow: add-ecc-bundle-component
+- Steps and files listed in workflows[1]
+
+---
+id: comfyui-auto_installer-ps-instinct-test-location
+trigger: "When adding new tests"
+confidence: 0.7
+domain: testing
+source: repo-analysis
+source_repo: shinseiko/ComfyUI-Auto_installer-PS
+---
+
+# Comfyui Auto_installer Ps Instinct Test Location
+
+## Action
+
+Place test files in a separate directory from source code
+
+## Evidence
+
+- Pattern in architecture.folderStructure.testLocation
+
