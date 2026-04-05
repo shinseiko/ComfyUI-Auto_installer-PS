@@ -1,0 +1,6 @@
+interface:
+  display_name: "ComfyUI Auto Installer PS"
+  short_description: "Repo-specific patterns and workflows for ComfyUI-Auto_installer-PS"
+  default_prompt: "Use the ComfyUI-Auto_installer-PS repo skill to follow existing architecture, testing, and workflow conventions."
+policy:
+  allow_implicit_invocation: true
